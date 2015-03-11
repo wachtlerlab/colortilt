@@ -1,0 +1,47 @@
+cmake_minimum_required(VERSION 2.8.4)
+project(pp-color-tilt)
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall")
+
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
+
+########################################
+# Boost
+
+set(Boost_USE_STATIC_LIBS OFF)
+set(Boost_USE_MULTITHREADED ON)
+set(Boost_USE_STATIC_RUNTIME OFF)
+find_package(Boost 1.49.0 REQUIRED program_options)
+
+include_directories(${Boost_INCLUDE_DIR})
+set(LINK_LIBS ${LINK_LIBS} ${Boost_LIBRARIES})
+
+########################################
+# OpenGL + Co
+find_package(OpenGL REQUIRED)
+find_package(GLM REQUIRED)
+find_package(PkgConfig REQUIRED)
+pkg_search_module(GLFW REQUIRED glfw3)
+
+include_directories(${GLFW_INCLUDE_DIRS}
+                    ${GLM_INCLUDE_DIRS}
+                    ${OpenGL_INCLUDE_DIRS})
+
+link_directories(${GLFW_LIBRARY_DIRS}
+                 ${GLM_LIBRARY_DIRS}
+                 ${OpenGL_LIBRARY_DIRS})
+
+set(LINK_LIBS ${LINK_LIBS} ${OPENGL_LIBRARIES} ${GLFW_LIBRARIES})
+
+########################################
+# IRIS
+
+find_package(IRIS REQUIRED)
+include_directories (${IRIS_INCLUDE_DIRS})
+set (LINK_LIBS ${LINK_LIBS} ${IRIS_LIBRARIES})
+
+#########################################
+set(experiment_SOURCES main.cc)
+add_executable(pp-ct ${experiment_SOURCES})
+target_link_libraries(pp-ct ${LINK_LIBS})
+
