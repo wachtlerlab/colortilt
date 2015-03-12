@@ -17,7 +17,10 @@
 
 #include <boost/program_options.hpp>
 
+#include "stimulus.h""
+
 namespace gl = glue;
+namespace ct = colortilt;
 
 static const char vs_simple[] = R"SHDR(
 #version 330
@@ -142,10 +145,15 @@ public:
         box_bg.init();
         box_fg.init();
         box_user.init();
+
+        cur_stim.fg = colorspace.iso_lum(1.0f, 0.16);
+        cur_stim.bg = colorspace.iso_lum(1.5f, 0.15);
+
     }
 
     virtual void framebuffer_size_changed(glue::extent size) override;
     virtual void pointer_moved(glue::point pos) override;
+    virtual void key_event(int key, int scancode, int action, int mods) override;
 
     void render();
 
@@ -155,6 +163,8 @@ public:
     gl::point cursor;
     float gain = 0.005;
     double phi = 0.0;
+
+    ct::stimulus cur_stim;
 
     rectangle box_bg;
     rectangle box_fg;
@@ -173,6 +183,7 @@ void ct_wnd::pointer_moved(gl::point pos) {
 
     cursor = pos;
     phi += length * gain * (s ? -1.0 : 1.0);
+    phi = fmod(phi + (2.0f * M_PI), (2.0f * M_PI));
 
     fg = colorspace.iso_lum(phi, 0.16);
 }
@@ -181,6 +192,13 @@ void ct_wnd::framebuffer_size_changed(gl::extent size) {
     gl::window::framebuffer_size_changed(size);
 }
 
+void ct_wnd::key_event(int key, int scancode, int action, int mods) {
+    window::key_event(key, scancode, action, mods);
+
+    if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
+        std::cout << phi << std::endl;
+    }
+}
 
 void ct_wnd::render() {
     gl::extent phy = moni.physical_size();
@@ -197,17 +215,17 @@ void ct_wnd::render() {
 
     glm::mat4 vp = projection * ttrans;
 
-    glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
+    glClearColor(0.66f, 0.66f, 0.66f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
     // background with color
     box_bg.configure(gl::extent(phy.width * .5f, phy.height));
-    box_bg.configure(fg);
+    box_bg.configure(cur_stim.fg);
     box_bg.draw(vp);
 
     //
     box_fg.configure(gl::extent(box_size, box_size));
-    box_fg.configure(iris::rgb::white());
+    box_fg.configure(cur_stim.bg);
     box_fg.draw(vp * tr_center);
 
     //
