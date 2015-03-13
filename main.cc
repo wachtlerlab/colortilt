@@ -196,6 +196,8 @@ public:
         cur_stim.phi_fg = 1.0f;
         cur_stim.phi_bg = 1.5f;
 
+        gr_color = colorspace.reference_gray();
+
         std::vector<double> circ_phi = iris::linspace(0.0, 2*M_PI, 16);
         circ_rgb.resize(circ_phi.size());
         std::transform(circ_phi.cbegin(), circ_phi.cend(), circ_rgb.begin(), [&](const double p){
@@ -216,21 +218,13 @@ public:
 
     void render();
 
-    void update_colors() {
-        fg_color = colorspace.iso_lum(cur_stim.phi_fg, c_fg);
-        bg_color = colorspace.iso_lum(cur_stim.phi_bg, c_bg);
-        cu_color = iris::rgb::gray(0.66f);
-        gr_color = iris::rgb::gray(0.66f);
-    }
-
     bool next_stimulus() {
         //todo: handle stimuli.empty?
         ct::stimulus cs = stimuli[stim_index++];
 
         fg_color = colorspace.iso_lum(cs.phi_fg, c_fg);
         bg_color = colorspace.iso_lum(cs.phi_bg, c_bg);
-        cu_color = iris::rgb::gray(0.66f);
-        gr_color = iris::rgb::gray(0.66f);
+        cu_color = colorspace.reference_gray();
 
         return stim_index < stimuli.size();
     }
@@ -238,8 +232,7 @@ public:
     iris::rgb fg_color = iris::rgb::gray();
     iris::rgb bg_color = iris::rgb::gray();
     iris::rgb cu_color = iris::rgb::gray();
-    iris::rgb gr_color = iris::rgb::gray();
-
+    iris::rgb gr_color;
 
     iris::dkl &colorspace;
     gl::monitor moni;
@@ -308,7 +301,7 @@ void ct_wnd::render() {
 
     glm::mat4 vp = projection * ttrans;
 
-    glClearColor(0.66f, 0.66f, 0.66f, 1.0f);
+    glClearColor(gr_color.r, gr_color.b, gr_color.b, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
     // background with color
