@@ -41,7 +41,7 @@ include_directories (${IRIS_INCLUDE_DIRS})
 set (LINK_LIBS ${LINK_LIBS} ${IRIS_LIBRARIES})
 
 #########################################
-set(experiment_SOURCES main.cc)
+set(experiment_SOURCES stimulus.h main.cc stimulus.cc)
 add_executable(pp-ct ${experiment_SOURCES})
 target_link_libraries(pp-ct ${LINK_LIBS})
 
