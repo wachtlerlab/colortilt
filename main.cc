@@ -54,6 +54,7 @@ public:
             return res;
         });
 
+        disable_cursor();
     }
 
     virtual void framebuffer_size_changed(glue::extent size) override;
