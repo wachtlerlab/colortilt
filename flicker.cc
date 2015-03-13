@@ -30,7 +30,7 @@ public:
             gl::window("Flicker", m), colorspace(cs), c(c), board(cs, c) {
         make_current_context();
         disable_cursor();
-
+        glfwSwapInterval(1);
         float stim_size = 40;
 
         wsize = m.physical_size();
@@ -60,7 +60,7 @@ public:
         double t_eps = t_now - t_frame;
 
         bool changed = false;
-        if (t_eps > 0.025) {
+        if (t_eps > 0.05) {
             draw_stim = !draw_stim;
             changed = true;
 
