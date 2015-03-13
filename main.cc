@@ -136,14 +136,25 @@ private:
 
 class checkerboard {
 public:
-    checkerboard(gl::extent frame, gl::extent box_size, const std::vector<iris::rgb> &c)
-        : size(frame), colors(c), rd(), gen(rd()), dis(0, (int) c.size() - 1) {
-        box.configure(box_size);
+    checkerboard(const iris::dkl &colorspace, double c)
+        : rd(), gen(rd()), dis(0, 15) {
+
+        std::vector<double> circ_phi = iris::linspace(0.0, 2*M_PI, 16);
+        colors.resize(circ_phi.size());
+        std::transform(circ_phi.cbegin(), circ_phi.cend(), colors.begin(), [&](const double p){
+            iris::rgb crgb = colorspace.iso_lum(p, c);
+            uint8_t creport;
+            iris::rgb res = crgb.clamp(&creport);
+            if (creport != 0) {
+                std::cerr << "[W] color clamped: " << crgb << " → " << res << " @ c: " << c << std::endl;
+            }
+            return res;
+        });
+
     }
 
     void init() {
         box.init();
-
     }
 
     void draw(glm::mat4 vp) {
@@ -157,24 +168,31 @@ public:
         }
     }
 
+    void configure(gl::extent frame, gl::extent box_size) {
+        size = frame;
+        box.configure(box_size);
+    }
+
 private:
     gl::extent size;
-    const std::vector<iris::rgb> &colors;
-    std::vector<int> indices;
     std::random_device rd;
     std::mt19937 gen;
-    std::uniform_int_distribution<> dis;
+    std::uniform_int_distribution<size_t> dis;
     rectangle box;
+
+    std::vector<iris::rgb> colors;
 };
 
 class ct_wnd : public gl::window {
 public:
     ct_wnd(const std::string &title, gl::monitor m, iris::dkl &cspace)
-            : window(title, m), colorspace(cspace), moni(m) {
+            : window(title, m), colorspace(cspace), moni(m), board(cspace, 0.16) {
         make_current_context();
         box_bg.init();
         box_fg.init();
         box_user.init();
+
+        board.init();
 
         cur_stim.phi_fg = 1.0f;
         cur_stim.phi_bg = 1.5f;
@@ -225,6 +243,8 @@ public:
     rectangle box_bg;
     rectangle box_fg;
     rectangle box_user;
+
+    checkerboard board;
 };
 
 void ct_wnd::pointer_moved(gl::point pos) {
@@ -288,11 +308,6 @@ void ct_wnd::render() {
     box_user.configure(gl::extent(box_size, box_size));
     box_user.configure(cu_color);
     box_user.draw(projection * tr_center);
-
-    //
-    //checkerboard cb(phy, gl::extent(box_size, box_size), circ_rgb);
-    //cb.init();
-    //cb.draw(projection);
 }
 
 int main(int argc, char **argv) {
@@ -334,7 +349,7 @@ int main(int argc, char **argv) {
     }
 
     gl::monitor moni = gl::monitor::monitors().back();
-    ct_wnd wnd = ct_wnd("Color Tilt Experiment", moni, cspace);
+    ct_wnd wnd("Color Tilt Experiment", moni, cspace);
 
     while (! wnd.should_close()) {
         wnd.render();
