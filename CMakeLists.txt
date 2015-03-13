@@ -45,3 +45,6 @@ set(experiment_SOURCES main.cc)
 add_executable(pp-ct ${experiment_SOURCES})
 target_link_libraries(pp-ct ${LINK_LIBS})
 
+set(stimgen_SOURCES stimgen.cc stimulus.h stimulus.cc)
+add_executable(pp-ct-stimgen ${stimgen_SOURCES})
+target_link_libraries(pp-ct-stimgen ${LINK_LIBS})
