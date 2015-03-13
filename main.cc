@@ -12,12 +12,15 @@
 
 #include <iostream>
 #include <dkl.h>
+#include <misc.h>
 
 #include <numeric>
+#include <random>
 
 #include <boost/program_options.hpp>
 
-#include "stimulus.h""
+
+#include "stimulus.h"
 
 namespace gl = glue;
 namespace ct = colortilt;
@@ -46,15 +49,12 @@ void main() {
 }
 )SHDR";
 
-
 class rectangle {
 public:
     void draw(glm::mat4 vp) {
         glm::mat4 tscale = glm::scale(glm::mat4(1), glm::vec3(size.width, size.height, 0));
 
         glm::mat4 mvp = vp * tscale;
-
-        glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
 
         gl::color::rgba gl_color(color);
 
@@ -80,7 +80,6 @@ public:
         prg = gl::program::make();
         prg.attach({vs, fs});
         prg.link();
-
 
         std::vector<float> box = {
                 0.0f,  1.0f,
@@ -135,7 +134,38 @@ private:
     gl::vertex_array va;
 };
 
+class checkerboard {
+public:
+    checkerboard(gl::extent frame, gl::extent box_size, const std::vector<iris::rgb> &c)
+        : size(frame), colors(c), rd(), gen(rd()), dis(0, (int) c.size() - 1) {
+        box.configure(box_size);
+    }
 
+    void init() {
+        box.init();
+
+    }
+
+    void draw(glm::mat4 vp) {
+        for (float x = 0.f; x < size.width; x += box.bounds().width) {
+            for(float y = 0.f; y < size.height; y += box.bounds().height) {
+                glm::mat4 ttrans = glm::translate(glm::mat4(1), glm::vec3(x, y, 0.0f));
+
+                box.configure(colors[dis(gen)]);
+                box.draw(vp * ttrans);
+            }
+        }
+    }
+
+private:
+    gl::extent size;
+    const std::vector<iris::rgb> &colors;
+    std::vector<int> indices;
+    std::random_device rd;
+    std::mt19937 gen;
+    std::uniform_int_distribution<> dis;
+    rectangle box;
+};
 
 class ct_wnd : public gl::window {
 public:
@@ -146,8 +176,20 @@ public:
         box_fg.init();
         box_user.init();
 
-        cur_stim.fg = colorspace.iso_lum(1.0f, 0.16);
-        cur_stim.bg = colorspace.iso_lum(1.5f, 0.15);
+        cur_stim.phi_fg = 1.0f;
+        cur_stim.phi_bg = 1.5f;
+
+        std::vector<double> circ_phi = iris::linspace(0.0, 2*M_PI, 16);
+        circ_rgb.resize(circ_phi.size());
+        std::transform(circ_phi.cbegin(), circ_phi.cend(), circ_rgb.begin(), [&](const double p){
+            iris::rgb crgb = colorspace.iso_lum(p, c_fg);
+            uint8_t creport;
+            iris::rgb res = crgb.clamp(&creport);
+            if (creport != 0) {
+                std::cerr << "[W] color clamped: " << crgb << " → " << res << " @ c: " << c_fg << std::endl;
+            }
+            return res;
+        });
 
     }
 
@@ -157,14 +199,28 @@ public:
 
     void render();
 
-    iris::rgb fg = iris::rgb::cyan();
+    void update_colors() {
+        fg_color = colorspace.iso_lum(cur_stim.phi_fg, c_fg);
+        bg_color = colorspace.iso_lum(cur_stim.phi_bg, c_bg);
+        cu_color = iris::rgb::gray(0.66f);
+        gr_color = iris::rgb::gray(0.66f);
+    }
+
+    iris::rgb fg_color = iris::rgb::gray();
+    iris::rgb bg_color = iris::rgb::gray();
+    iris::rgb cu_color = iris::rgb::gray();
+    iris::rgb gr_color = iris::rgb::gray();
+
     iris::dkl &colorspace;
     gl::monitor moni;
     gl::point cursor;
     float gain = 0.005;
     double phi = 0.0;
+    double c_fg = 0.16;
+    double c_bg = 0.14;
 
     ct::stimulus cur_stim;
+    std::vector<iris::rgb> circ_rgb;
 
     rectangle box_bg;
     rectangle box_fg;
@@ -185,7 +241,7 @@ void ct_wnd::pointer_moved(gl::point pos) {
     phi += length * gain * (s ? -1.0 : 1.0);
     phi = fmod(phi + (2.0f * M_PI), (2.0f * M_PI));
 
-    fg = colorspace.iso_lum(phi, 0.16);
+    fg_color = colorspace.iso_lum(phi, 0.16);
 }
 
 void ct_wnd::framebuffer_size_changed(gl::extent size) {
@@ -220,19 +276,23 @@ void ct_wnd::render() {
 
     // background with color
     box_bg.configure(gl::extent(phy.width * .5f, phy.height));
-    box_bg.configure(cur_stim.fg);
+    box_bg.configure(bg_color);
     box_bg.draw(vp);
 
     //
     box_fg.configure(gl::extent(box_size, box_size));
-    box_fg.configure(cur_stim.bg);
+    box_fg.configure(fg_color);
     box_fg.draw(vp * tr_center);
 
     //
     box_user.configure(gl::extent(box_size, box_size));
-    box_user.configure(fg);
+    box_user.configure(cu_color);
     box_user.draw(projection * tr_center);
 
+    //
+    //checkerboard cb(phy, gl::extent(box_size, box_size), circ_rgb);
+    //cb.init();
+    //cb.draw(projection);
 }
 
 int main(int argc, char **argv) {
