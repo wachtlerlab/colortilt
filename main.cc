@@ -221,6 +221,7 @@ public:
     bool next_stimulus() {
         //todo: handle stimuli.empty?
         ct::stimulus cs = stimuli[stim_index++];
+        cur_stim = cs;
 
         fg_color = colorspace.iso_lum(cs.phi_fg, c_fg);
         bg_color = colorspace.iso_lum(cs.phi_bg, c_bg);
@@ -240,7 +241,7 @@ public:
     size_t stim_index = 0;
 
     gl::point cursor;
-    float gain = 0.005;
+    float gain = 0.001;
     double phi = 0.0;
     double c_fg = 0.16;
     double c_bg = 0.14;
@@ -278,8 +279,7 @@ void ct_wnd::key_event(int key, int scancode, int action, int mods) {
 
     if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
         if (stim_index != 0) {
-            const ct::stimulus &cs = stimuli[stim_index - 1];
-            std::cout << cs.phi_bg << ", " << cs.phi_fg << ", " << phi << std::endl;
+            std::cout << cur_stim.size << ", " << cur_stim.phi_bg << ", " << cur_stim.phi_fg << ", " << phi << std::endl;
         }
         bool keep_going = next_stimulus();
         should_close(!keep_going);
@@ -292,10 +292,10 @@ void ct_wnd::render() {
     glm::mat4 projection = glm::ortho(0.f, phy.width, phy.height, 0.f);
     glm::mat4 ttrans = glm::translate(glm::mat4(1), glm::vec3(phy.width*.5f, 0.f, 0.0f));
 
-    const float box_size = 40.f;
+    const float stim_size = cur_stim.size;
 
-    const float center_x = phy.width * .25f - (box_size * .5f);
-    const float center_y = phy.height * .5f - (box_size * .5f);
+    const float center_x = phy.width * .25f - (stim_size * .5f);
+    const float center_y = phy.height * .5f - (stim_size * .5f);
 
     glm::mat4 tr_center = glm::translate(glm::mat4(1), glm::vec3(center_x, center_y, 0.0f));
 
@@ -310,12 +310,12 @@ void ct_wnd::render() {
     box.draw(vp);
 
     // foreground with color
-    box.configure(gl::extent(box_size, box_size));
+    box.configure(gl::extent(stim_size, stim_size));
     box.configure(fg_color);
     box.draw(vp * tr_center);
 
     // user choice on gray background
-    box.configure(gl::extent(box_size, box_size));
+    box.configure(gl::extent(stim_size, stim_size));
     box.configure(cu_color);
     box.draw(projection * tr_center);
 }
@@ -359,7 +359,7 @@ int main(int argc, char **argv) {
 
     std::cerr << "Using rgb2sml calibration:" << std::endl;
     params.print(std::cerr);
-    iris::rgb refpoint(0.65f, 0.65f, 0.65f);
+    iris::rgb refpoint(iris::rgb::gray(0.66f));
     iris::dkl cspace(params, refpoint);
 
     if (!glfwInit()) {
