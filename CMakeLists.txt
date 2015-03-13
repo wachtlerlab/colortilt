@@ -41,6 +41,18 @@ include_directories (${IRIS_INCLUDE_DIRS})
 set (LINK_LIBS ${LINK_LIBS} ${IRIS_LIBRARIES})
 
 #########################################
+# Linux
+
+if(NOT APPLE)
+  pkg_search_module(GLEW REQUIRED glew)
+  include_directories(${GLEW_INCLUDE_DIRS})
+  link_directories(${GLEW_LIBRARY_DIRS})
+  set(LINK_LIBS ${LINK_LIBS} ${GLEW_LIBRARIES})
+
+  set(LINK_LIBS ${LINK_LIBS} -lstdc++)
+endif()
+
+#########################################
 set(experiment_SOURCES stimulus.h main.cc stimulus.cc)
 add_executable(pp-ct ${experiment_SOURCES})
 target_link_libraries(pp-ct ${LINK_LIBS})
