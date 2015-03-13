@@ -150,7 +150,6 @@ public:
             }
             return res;
         });
-
     }
 
     void init() {
@@ -173,6 +172,15 @@ public:
         box.configure(box_size);
     }
 
+    void reset_timer() {
+        t_start = glfwGetTime();
+    }
+
+    double duration() const {
+        double t_now = glfwGetTime();
+        return t_now - t_start;
+    }
+
 private:
     gl::extent size;
     std::random_device rd;
@@ -181,6 +189,7 @@ private:
     rectangle box;
 
     std::vector<iris::rgb> colors;
+    double t_start;
 };
 
 class ct_wnd : public gl::window {
@@ -197,6 +206,7 @@ public:
         cur_stim.phi_bg = 1.5f;
 
         gr_color = colorspace.reference_gray();
+        intermission = false;
 
         std::vector<double> circ_phi = iris::linspace(0.0, 2*M_PI, 16);
         circ_rgb.resize(circ_phi.size());
@@ -216,6 +226,8 @@ public:
     virtual void pointer_moved(glue::point pos) override;
     virtual void key_event(int key, int scancode, int action, int mods) override;
 
+    void render_stimulus();
+    void render_checkerboard();
     void render();
 
     bool next_stimulus() {
@@ -251,6 +263,8 @@ public:
 
     rectangle box;
     checkerboard board;
+
+    bool intermission;
 };
 
 void ct_wnd::pointer_moved(gl::point pos) {
@@ -278,15 +292,46 @@ void ct_wnd::key_event(int key, int scancode, int action, int mods) {
     window::key_event(key, scancode, action, mods);
 
     if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
+
+        if (intermission) {
+            return;
+        }
+
         if (stim_index != 0) {
             std::cout << cur_stim.size << ", " << cur_stim.phi_bg << ", " << cur_stim.phi_fg << ", " << phi << std::endl;
         }
         bool keep_going = next_stimulus();
         should_close(!keep_going);
+        intermission = true;
+        board.reset_timer();
     }
 }
 
+
 void ct_wnd::render() {
+    if (intermission) {
+        render_checkerboard();
+
+        double cb_time = board.duration();
+        if (cb_time > 2.0f) {
+            intermission = false;
+        }
+
+    } else {
+        render_stimulus();
+    }
+}
+
+void ct_wnd::render_checkerboard() {
+
+    gl::extent phy = moni.physical_size();
+    board.configure(phy, gl::extent(40.f, 40.f));
+    glm::mat4 projection = glm::ortho(0.f, phy.width, phy.height, 0.f);
+    board.draw(projection);
+
+}
+
+void ct_wnd::render_stimulus() {
     gl::extent phy = moni.physical_size();
 
     glm::mat4 projection = glm::ortho(0.f, phy.width, phy.height, 0.f);
