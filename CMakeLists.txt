@@ -49,7 +49,7 @@ if(NOT APPLE)
   link_directories(${GLEW_LIBRARY_DIRS})
   set(LINK_LIBS ${LINK_LIBS} ${GLEW_LIBRARIES})
 
-  set(LINK_LIBS ${LINK_LIBS} -lstdc++)
+  set(LINK_LIBS ${LINK_LIBS} -lstdc++ -lm)
 endif()
 
 #########################################
