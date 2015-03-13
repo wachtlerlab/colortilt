@@ -188,10 +188,7 @@ public:
     ct_wnd(gl::monitor m, iris::dkl &cspace, const std::vector<ct::stimulus> &stimuli)
             : window("Color Tilt Experiment", m), colorspace(cspace), moni(m), stimuli(stimuli), board(cspace, 0.16) {
         make_current_context();
-        box_bg.init();
-        box_fg.init();
-        box_user.init();
-
+        box.init();
         board.init();
 
         stim_index = 0;
@@ -258,10 +255,7 @@ public:
     ct::stimulus cur_stim;
     std::vector<iris::rgb> circ_rgb;
 
-    rectangle box_bg;
-    rectangle box_fg;
-    rectangle box_user;
-
+    rectangle box;
     checkerboard board;
 };
 
@@ -290,7 +284,10 @@ void ct_wnd::key_event(int key, int scancode, int action, int mods) {
     window::key_event(key, scancode, action, mods);
 
     if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
-        std::cout << phi << std::endl;
+        if (stim_index != 0) {
+            const ct::stimulus &cs = stimuli[stim_index - 1];
+            std::cout << cs.phi_bg << ", " << cs.phi_fg << ", " << phi << std::endl;
+        }
         bool keep_going = next_stimulus();
         should_close(!keep_going);
     }
@@ -315,19 +312,19 @@ void ct_wnd::render() {
     glClear(GL_COLOR_BUFFER_BIT);
 
     // background with color
-    box_bg.configure(gl::extent(phy.width * .5f, phy.height));
-    box_bg.configure(bg_color);
-    box_bg.draw(vp);
+    box.configure(gl::extent(phy.width * .5f, phy.height));
+    box.configure(bg_color);
+    box.draw(vp);
 
-    //
-    box_fg.configure(gl::extent(box_size, box_size));
-    box_fg.configure(fg_color);
-    box_fg.draw(vp * tr_center);
+    // foreground with color
+    box.configure(gl::extent(box_size, box_size));
+    box.configure(fg_color);
+    box.draw(vp * tr_center);
 
-    //
-    box_user.configure(gl::extent(box_size, box_size));
-    box_user.configure(cu_color);
-    box_user.draw(projection * tr_center);
+    // user choice on gray background
+    box.configure(gl::extent(box_size, box_size));
+    box.configure(cu_color);
+    box.draw(projection * tr_center);
 }
 
 int main(int argc, char **argv) {
