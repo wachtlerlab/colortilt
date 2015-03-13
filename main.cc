@@ -185,14 +185,16 @@ private:
 
 class ct_wnd : public gl::window {
 public:
-    ct_wnd(const std::string &title, gl::monitor m, iris::dkl &cspace)
-            : window(title, m), colorspace(cspace), moni(m), board(cspace, 0.16) {
+    ct_wnd(gl::monitor m, iris::dkl &cspace, const std::vector<ct::stimulus> &stimuli)
+            : window("Color Tilt Experiment", m), colorspace(cspace), moni(m), stimuli(stimuli), board(cspace, 0.16) {
         make_current_context();
         box_bg.init();
         box_fg.init();
         box_user.init();
 
         board.init();
+
+        stim_index = 0;
 
         cur_stim.phi_fg = 1.0f;
         cur_stim.phi_bg = 1.5f;
@@ -224,13 +226,29 @@ public:
         gr_color = iris::rgb::gray(0.66f);
     }
 
+    bool next_stimulus() {
+        //todo: handle stimuli.empty?
+        ct::stimulus cs = stimuli[stim_index++];
+
+        fg_color = colorspace.iso_lum(cs.phi_fg, c_fg);
+        bg_color = colorspace.iso_lum(cs.phi_bg, c_bg);
+        cu_color = iris::rgb::gray(0.66f);
+        gr_color = iris::rgb::gray(0.66f);
+
+        return stim_index < stimuli.size();
+    }
+
     iris::rgb fg_color = iris::rgb::gray();
     iris::rgb bg_color = iris::rgb::gray();
     iris::rgb cu_color = iris::rgb::gray();
     iris::rgb gr_color = iris::rgb::gray();
 
+
     iris::dkl &colorspace;
     gl::monitor moni;
+    const std::vector<ct::stimulus> &stimuli;
+    size_t stim_index = 0;
+
     gl::point cursor;
     float gain = 0.005;
     double phi = 0.0;
@@ -261,7 +279,7 @@ void ct_wnd::pointer_moved(gl::point pos) {
     phi += length * gain * (s ? -1.0 : 1.0);
     phi = fmod(phi + (2.0f * M_PI), (2.0f * M_PI));
 
-    fg_color = colorspace.iso_lum(phi, 0.16);
+    cu_color = colorspace.iso_lum(phi, 0.16);
 }
 
 void ct_wnd::framebuffer_size_changed(gl::extent size) {
@@ -273,6 +291,8 @@ void ct_wnd::key_event(int key, int scancode, int action, int mods) {
 
     if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
         std::cout << phi << std::endl;
+        bool keep_going = next_stimulus();
+        should_close(!keep_going);
     }
 }
 
@@ -314,14 +334,16 @@ int main(int argc, char **argv) {
     namespace po = boost::program_options;
 
     std::string ca_path;
+    std::string stim_path = "-";
 
     po::options_description opts("colortilt experiment");
     opts.add_options()
             ("help", "produce help message")
-            ("calibration,c", po::value<std::string>(&ca_path)->required());
+            ("calibration,c", po::value<std::string>(&ca_path)->required())
+            ("stimuli,s", po::value<std::string>(&stim_path)->required());
 
     po::positional_options_description pos;
-    pos.add("cone-fundamentals", 1);
+    pos.add("stimuli", 1);
 
     po::variables_map vm;
     try {
@@ -338,7 +360,13 @@ int main(int argc, char **argv) {
         return 0;
     }
 
+    if (stim_path == "-") {
+        stim_path = "/dev/stdin";
+    }
+
+    std::vector<ct::stimulus> stimuli = ct::stimulus::from_csv(stim_path);
     iris::dkl::parameter params = iris::dkl::parameter::from_csv(ca_path);
+
     std::cerr << "Using rgb2sml calibration:" << std::endl;
     params.print(std::cerr);
     iris::rgb refpoint(0.65f, 0.65f, 0.65f);
@@ -349,7 +377,7 @@ int main(int argc, char **argv) {
     }
 
     gl::monitor moni = gl::monitor::monitors().back();
-    ct_wnd wnd("Color Tilt Experiment", moni, cspace);
+    ct_wnd wnd(moni, cspace, stimuli);
 
     while (! wnd.should_close()) {
         wnd.render();
