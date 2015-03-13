@@ -16,6 +16,8 @@ struct stimulus {
     double phi_bg;
 
     float size;
+
+    static std::vector<stimulus> from_csv(const std::string &path);
 };
 
 
