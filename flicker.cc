@@ -85,7 +85,12 @@ public:
     virtual void key_event(int key, int scancode, int action, int mods) override {
         window::key_event(key, scancode, action, mods);
 
-        if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
+        if (action != GLFW_PRESS) {
+            return;
+        }
+
+        float gain = mods == GLFW_MOD_SHIFT ? .5f : 0.01f;
+        if (key == GLFW_KEY_SPACE ) {
 
             if (intermission) {
                 return;
@@ -99,6 +104,11 @@ public:
             } else {
                 should_close(true);
             }
+
+        } else if (key == GLFW_KEY_RIGHT) {
+            lum_change(.1f, gain);
+        } else if (key == GLFW_KEY_LEFT) {
+            lum_change(-.1f, gain);
         }
     }
 
