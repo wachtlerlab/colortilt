@@ -70,7 +70,6 @@ public:
 
         // Assumes 60 Hz
         if (nframes % 3 == 0) {
-
             draw_stim = !draw_stim;
         }
 
@@ -103,6 +102,8 @@ public:
             if (intermission) {
                 return;
             }
+
+            std::cout << phi[stim_index] << ", " << colorspace.reference_gray().r << std::endl;
 
             stim_index++;
 
