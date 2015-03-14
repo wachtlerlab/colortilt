@@ -51,7 +51,6 @@ public:
         stim_index = 0;
 
         fg_color = colorspace.iso_lum(phi[stim_size], c);
-
         intermission = false;
     }
 
@@ -100,22 +99,20 @@ public:
             } else {
                 should_close(true);
             }
-
         }
+    }
+
+    void lum_change(float delta, float gain) {
+        iris::rgb gray = colorspace.reference_gray();
+        gray = iris::rgb::gray(gray.r + delta * gain).clamp();
+        colorspace.reference_gray(gray);
+        fg_color = colorspace.iso_lum(phi[stim_size], c);
     }
 
     virtual void pointer_moved(glue::point pos) override {
         float x = cursor.x - pos.x;
-
         float gain = 0.00001;
-        iris::rgb gray = colorspace.reference_gray();
-        float delta = x * gain;
-
-        gray = iris::rgb::gray(gray.r + delta).clamp();
-        std::cerr << gray.r << std::endl;
-        colorspace.reference_gray(gray);
-
-        fg_color = colorspace.iso_lum(phi[stim_size], c);
+        lum_change(x, gain);
         cursor = pos;
     }
 
