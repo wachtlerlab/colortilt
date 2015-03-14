@@ -26,19 +26,26 @@ namespace gl = glue;
 
 namespace flicker {
 
+struct setup {
+    float   gray_level;
+    float   stimulus_size;
+    float   mouse_gain;
+    double  contrast;
+};
+
 class flicker_wnd : public gl::window {
 public:
-    flicker_wnd(gl::monitor &m, iris::dkl &cs, double c) :
-            gl::window("Flicker", m), colorspace(cs), c(c), board(cs, c) {
+    flicker_wnd(gl::monitor &m, iris::dkl &cs, setup s, const std::vector<double> &stim) :
+            gl::window("Flicker", m), colorspace(cs), s(s), board(cs, s.contrast), phi(stim) {
         make_current_context();
         glfwSwapInterval(1);
         disable_cursor();
-        float stim_size = 40;
 
         wsize = m.physical_size();
         box.init();
         board.init();
 
+        const float stim_size = s.stimulus_size;
         box.configure(gl::extent(stim_size, stim_size));
 
         glm::mat4 projection = glm::ortho(0.f, wsize.width, wsize.height, 0.f);
@@ -49,10 +56,8 @@ public:
         glm::mat4 tr_center = glm::translate(glm::mat4(1), glm::vec3(center_x, center_y, 0.0f));
         mvp = projection * tr_center;
 
-        phi = iris::linspace(0.0, 2 * M_PI, 8);
         stim_index = 0;
-
-        fg_color = colorspace.iso_lum(phi[stim_size], c);
+        fg_color = colorspace.iso_lum(phi[stim_index], s.contrast);;
         intermission = false;
     }
 
@@ -69,13 +74,14 @@ public:
             draw_stim = !draw_stim;
         }
 
+        iris::rgb cur_color;
         if (draw_stim) {
             cur_color = fg_color;
         } else {
-            cur_color = iris::rgb::gray(0.6f);
+            cur_color = iris::rgb::gray(s.gray_level);
         }
 
-        glClearColor(0.6f, 0.6f, 0.6f, 1.0f);
+        glClearColor(s.gray_level, s.gray_level, s.gray_level, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
         box.configure(cur_color);
@@ -101,8 +107,8 @@ public:
             stim_index++;
 
             if (stim_index < phi.size()) {
-                fg_color = colorspace.iso_lum(phi[stim_index], c);
-                colorspace.reference_gray(iris::rgb::gray(0.66f));
+                fg_color = colorspace.iso_lum(phi[stim_index], s.contrast);
+                colorspace.reference_gray(iris::rgb::gray(s.gray_level));
             } else {
                 should_close(true);
             }
@@ -118,12 +124,12 @@ public:
         iris::rgb gray = colorspace.reference_gray();
         gray = iris::rgb::gray(gray.r + delta * gain).clamp();
         colorspace.reference_gray(gray);
-        fg_color = colorspace.iso_lum(phi[stim_size], c);
+        fg_color = colorspace.iso_lum(phi[stim_index], s.contrast);
     }
 
     virtual void pointer_moved(glue::point pos) override {
         float x = cursor.x - pos.x;
-        float gain = 0.00001;
+        float gain = s.mouse_gain;
         lum_change(x, gain);
         cursor = pos;
     }
@@ -131,7 +137,7 @@ public:
 private:
     gl::extent wsize;
     iris::dkl &colorspace;
-    double c;
+    setup s;
 
     iris::rectangle box;
     iris::checkerboard board;
@@ -140,14 +146,12 @@ private:
     size_t stim_index;
 
     iris::rgb fg_color;
-    iris::rgb cur_color;
 
     bool intermission;
     bool draw_stim;
 
     size_t nframes;
 
-    float stim_size;
     glm::mat4 mvp;
     gl::point cursor;
 };
@@ -155,6 +159,19 @@ private:
 } //flicker::
 
 using namespace flicker;
+
+template<typename T>
+std::vector<T> repvec(const std::vector<T> &input, size_t n) {
+    std::vector<T> res(n*input.size());
+
+    auto output_iter = res.begin();
+    for(size_t i = 0; i < n; i++) {
+        std::advance(output_iter, input.size()*i);
+        std::copy(input.cbegin(), input.cend(), output_iter);
+    }
+
+    return res;
+}
 
 int main(int argc, char **argv) {
     namespace po = boost::program_options;
@@ -192,10 +209,25 @@ int main(int argc, char **argv) {
 
     std::cerr << "Using rgb2sml calibration:" << std::endl;
     params.print(std::cerr);
-    iris::rgb refpoint(iris::rgb::gray(0.66f));
+
+    setup cfg;
+    cfg.contrast = 0.16;
+    cfg.stimulus_size = 40.f;
+    cfg.mouse_gain = 0.00001;
+    cfg.gray_level = 0.66f;
+
+    iris::rgb refpoint(iris::rgb::gray(cfg.gray_level));
     iris::dkl cspace(params, refpoint);
 
-    flicker_wnd wnd(moni, cspace, 0.16);
+    std::vector<double> phi = iris::linspace(0.0, 2 * M_PI, 8);
+    std::vector<double> stim = repvec(phi, 2);
+
+    if (stim.size() == 0) {
+        std::cout << "# nothing to do" << std::endl;
+        return 1;
+    }
+
+    flicker_wnd wnd(moni, cspace, cfg, stim);
 
     while (! wnd.should_close()) {
         wnd.render();
