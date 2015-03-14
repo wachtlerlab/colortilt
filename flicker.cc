@@ -24,6 +24,8 @@
 
 namespace gl = glue;
 
+namespace flicker {
+
 class flicker_wnd : public gl::window {
 public:
     flicker_wnd(gl::monitor &m, iris::dkl &cs, double c) :
@@ -41,13 +43,13 @@ public:
 
         glm::mat4 projection = glm::ortho(0.f, wsize.width, wsize.height, 0.f);
 
-        const float center_x = wsize.width *  .5f - (stim_size * .5f);
+        const float center_x = wsize.width * .5f - (stim_size * .5f);
         const float center_y = wsize.height * .5f - (stim_size * .5f);
 
         glm::mat4 tr_center = glm::translate(glm::mat4(1), glm::vec3(center_x, center_y, 0.0f));
         mvp = projection * tr_center;
 
-        phi = iris::linspace(0.0, 2*M_PI, 8);
+        phi = iris::linspace(0.0, 2 * M_PI, 8);
         stim_index = 0;
 
         fg_color = colorspace.iso_lum(phi[stim_size], c);
@@ -67,7 +69,7 @@ public:
             draw_stim = !draw_stim;
         }
 
-        if(draw_stim) {
+        if (draw_stim) {
             cur_color = fg_color;
         } else {
             cur_color = iris::rgb::gray(0.6f);
@@ -90,7 +92,7 @@ public:
         }
 
         float gain = mods == GLFW_MOD_SHIFT ? .5f : 0.01f;
-        if (key == GLFW_KEY_SPACE ) {
+        if (key == GLFW_KEY_SPACE) {
 
             if (intermission) {
                 return;
@@ -149,6 +151,10 @@ private:
     glm::mat4 mvp;
     gl::point cursor;
 };
+
+} //flicker::
+
+using namespace flicker;
 
 int main(int argc, char **argv) {
     namespace po = boost::program_options;
