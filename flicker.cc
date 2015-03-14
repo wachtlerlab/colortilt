@@ -29,8 +29,8 @@ public:
     flicker_wnd(gl::monitor &m, iris::dkl &cs, double c) :
             gl::window("Flicker", m), colorspace(cs), c(c), board(cs, c) {
         make_current_context();
-        disable_cursor();
         glfwSwapInterval(1);
+        disable_cursor();
         float stim_size = 40;
 
         wsize = m.physical_size();
@@ -56,29 +56,31 @@ public:
     }
 
     void render() {
-        double t_now = glfwGetTime();
-        double t_eps = t_now - t_frame;
+        nframes++;
 
-        bool changed = false;
-        if (t_eps > 0.05) {
+        if (nframes == 60) {
+            nframes = 0;
+        }
+
+        // Assumes 60 Hz
+        if (nframes % 3 == 0) {
+
             draw_stim = !draw_stim;
-            changed = true;
-
-            const iris::rgb &gr_color = iris::rgb::gray(0.66f);
-            glClearColor(gr_color.r, gr_color.b, gr_color.b, 1.0f);
-            glClear(GL_COLOR_BUFFER_BIT);
         }
 
-        if (draw_stim) {
-            box.configure(fg_color);
-            box.draw(mvp);
+        if(draw_stim) {
+            cur_color = fg_color;
+        } else {
+            cur_color = iris::rgb::gray(0.6f);
         }
 
-        if (changed) {
-            swap_buffers();
-            t_frame = t_now;
-            std::cerr << t_eps << std::endl;
-        }
+        glClearColor(0.6f, 0.6f, 0.6f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        box.configure(cur_color);
+        box.draw(mvp);
+
+        swap_buffers();
     }
 
     virtual void key_event(int key, int scancode, int action, int mods) override {
@@ -129,11 +131,12 @@ private:
     size_t stim_index;
 
     iris::rgb fg_color;
+    iris::rgb cur_color;
 
     bool intermission;
     bool draw_stim;
 
-    double t_frame;
+    size_t nframes;
 
     float stim_size;
     glm::mat4 mvp;
