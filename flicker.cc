@@ -179,9 +179,14 @@ int main(int argc, char **argv) {
 
     std::string ca_path;
 
+    size_t N = 16;
+    size_t R = 4;
+
     po::options_description opts("colortilt experiment");
     opts.add_options()
             ("help", "produce help message")
+            ("number,n", po::value<size_t>(&N), "number of colors to sample [default=16")
+            ("repetition,r", po::value<size_t>(&R), "number of repetitions [default=4]")
             ("calibration,c", po::value<std::string>(&ca_path)->required());
 
     po::positional_options_description pos;
@@ -220,8 +225,8 @@ int main(int argc, char **argv) {
     iris::rgb refpoint(iris::rgb::gray(cfg.gray_level));
     iris::dkl cspace(params, refpoint);
 
-    std::vector<double> phi = iris::linspace(0.0, 2 * M_PI, 8);
-    std::vector<double> stim = repvec(phi, 2);
+    std::vector<double> phi = iris::linspace(0.0, 2 * M_PI, N);
+    std::vector<double> stim = repvec(phi, R);
 
     if (stim.size() == 0) {
         std::cout << "# nothing to do" << std::endl;
