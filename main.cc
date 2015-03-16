@@ -209,8 +209,10 @@ int main(int argc, char **argv) {
     std::string stim_path = "-";
     float width = 0.0f;
     float height = 0.0f;
+    float gray_level = 0.66f;
     double c_fg = 0.f;
     double c_bg = 0.f;
+
 
     po::options_description opts("colortilt experiment");
     opts.add_options()
@@ -220,6 +222,7 @@ int main(int argc, char **argv) {
             ("height,H", po::value<float>(&height))
             ("c-fg", po::value<double>(&c_fg)->required())
             ("c-bg", po::value<double>(&c_bg)->required())
+            ("gray", po::value<float>(&gray_level), "reference gray [default=0.66]")
             ("stimuli,s", po::value<std::string>(&stim_path)->required());
 
     po::positional_options_description pos;
@@ -259,7 +262,7 @@ int main(int argc, char **argv) {
 
     std::cerr << "Using rgb2sml calibration:" << std::endl;
     params.print(std::cerr);
-    iris::rgb refpoint(iris::rgb::gray(0.66f));
+    iris::rgb refpoint(iris::rgb::gray(gray_level));
     iris::dkl cspace(params, refpoint);
 
     if (!glfwInit()) {
