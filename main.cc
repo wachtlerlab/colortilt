@@ -27,9 +27,10 @@ namespace ct = colortilt;
 
 class ct_wnd : public gl::window {
 public:
-    ct_wnd(gl::monitor m, iris::dkl &cspace, const std::vector<ct::stimulus> &stimuli, gl::extent phy_size)
-            : window("Color Tilt Experiment", m), colorspace(cspace), moni(m),
-              stimuli(stimuli), board(cspace, 0.16), phy(phy_size) {
+    ct_wnd(gl::monitor m, iris::dkl &cspace, const std::vector<ct::stimulus> &stimuli,
+           gl::extent phy_size, float c_fg, float c_bg)
+            : window("Color Tilt Experiment", m), colorspace(cspace), stimuli(stimuli),
+              c_fg(c_fg), c_bg(c_bg), board(cspace, 0.16), phy(phy_size) {
         make_current_context();
         box.init();
         board.init();
@@ -90,7 +91,6 @@ public:
     iris::rgb gr_color;
 
     iris::dkl &colorspace;
-    gl::monitor moni;
     const std::vector<ct::stimulus> &stimuli;
     size_t stim_index = 0;
 
@@ -214,6 +214,8 @@ int main(int argc, char **argv) {
     std::string stim_path = "-";
     float width = 0.0f;
     float height = 0.0f;
+    double c_fg = 0.f;
+    double c_bg = 0.f;
 
     po::options_description opts("colortilt experiment");
     opts.add_options()
@@ -221,6 +223,8 @@ int main(int argc, char **argv) {
             ("calibration,c", po::value<std::string>(&ca_path)->required())
             ("width,W", po::value<float>(&width))
             ("height,H", po::value<float>(&height))
+            ("c-fg", po::value<double>(&c_fg)->required())
+            ("c-bg", po::value<double>(&c_bg)->required())
             ("stimuli,s", po::value<std::string>(&stim_path)->required());
 
     po::positional_options_description pos;
@@ -254,6 +258,9 @@ int main(int argc, char **argv) {
     }
 
     std::cerr << "Stimuli N: " << stimuli.size() << std::endl;
+    std::cerr << "contrast fg: " << c_fg << std::endl;
+    std::cerr << "contrast bg: " << c_fg << std::endl;
+
 
     std::cerr << "Using rgb2sml calibration:" << std::endl;
     params.print(std::cerr);
@@ -275,7 +282,7 @@ int main(int argc, char **argv) {
         phy_size = moni.physical_size();
     }
 
-    ct_wnd wnd(moni, cspace, stimuli, phy_size);
+    ct_wnd wnd(moni, cspace, stimuli, phy_size, c_fg, c_bg);
 
     while (! wnd.should_close()) {
         wnd.render();
