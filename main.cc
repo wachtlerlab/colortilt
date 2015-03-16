@@ -19,7 +19,6 @@
 
 #include <boost/program_options.hpp>
 
-
 #include "stimulus.h"
 #include "scene.h"
 
@@ -28,8 +27,9 @@ namespace ct = colortilt;
 
 class ct_wnd : public gl::window {
 public:
-    ct_wnd(gl::monitor m, iris::dkl &cspace, const std::vector<ct::stimulus> &stimuli)
-            : window("Color Tilt Experiment", m), colorspace(cspace), moni(m), stimuli(stimuli), board(cspace, 0.16) {
+    ct_wnd(gl::monitor m, iris::dkl &cspace, const std::vector<ct::stimulus> &stimuli, gl::extent phy_size)
+            : window("Color Tilt Experiment", m), colorspace(cspace), moni(m),
+              stimuli(stimuli), board(cspace, 0.16), phy(phy_size) {
         make_current_context();
         box.init();
         board.init();
@@ -106,6 +106,7 @@ public:
     iris::rectangle box;
     iris::checkerboard board;
 
+    gl::extent phy;
     bool intermission;
 };
 
@@ -165,16 +166,15 @@ void ct_wnd::render() {
 }
 
 void ct_wnd::render_checkerboard() {
+    const float stim_size = cur_stim.size;
 
-    gl::extent phy = moni.physical_size();
-    board.configure(phy, gl::extent(40.f, 40.f));
+    board.configure(phy, gl::extent(stim_size, stim_size));
     glm::mat4 projection = glm::ortho(0.f, phy.width, phy.height, 0.f);
     board.draw(projection);
 
 }
 
 void ct_wnd::render_stimulus() {
-    gl::extent phy = moni.physical_size();
 
     glm::mat4 projection = glm::ortho(0.f, phy.width, phy.height, 0.f);
     glm::mat4 ttrans = glm::translate(glm::mat4(1), glm::vec3(phy.width*.5f, 0.f, 0.0f));
@@ -212,11 +212,15 @@ int main(int argc, char **argv) {
 
     std::string ca_path;
     std::string stim_path = "-";
+    float width = 0.0f;
+    float height = 0.0f;
 
     po::options_description opts("colortilt experiment");
     opts.add_options()
             ("help", "produce help message")
             ("calibration,c", po::value<std::string>(&ca_path)->required())
+            ("width,W", po::value<float>(&width))
+            ("height,H", po::value<float>(&height))
             ("stimuli,s", po::value<std::string>(&stim_path)->required());
 
     po::positional_options_description pos;
@@ -261,7 +265,17 @@ int main(int argc, char **argv) {
     }
 
     gl::monitor moni = gl::monitor::monitors().back();
-    ct_wnd wnd(moni, cspace, stimuli);
+
+    gl::extent phy_size;
+    if (width > 0.0f && height > 0.0f) {
+        std::cerr << "Overwriting monitor size: " << width << "×" << height << std::endl;
+        phy_size.width = width;
+        phy_size.height = height;
+    } else {
+        phy_size = moni.physical_size();
+    }
+
+    ct_wnd wnd(moni, cspace, stimuli, phy_size);
 
     while (! wnd.should_close()) {
         wnd.render();
