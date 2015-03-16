@@ -71,7 +71,8 @@ int main(int argc, char **argv) {
     for(size_t i = 0; i < fgs.size(); i++) {
         for(size_t j = 0; j < bgs.size(); j++) {
             for(size_t k = 0; k < sizes.size(); k++) {
-                stimuli.emplace_back(fgs[i], bgs[j], sizes[k]);
+                char side = (i+j+k) % 2 == 0 ? 'l' : 'r';
+                stimuli.emplace_back(fgs[i], bgs[j], sizes[k], side);
             }
         }
     }
@@ -89,7 +90,9 @@ int main(int argc, char **argv) {
             std::cout.width(8);
             std::cout << s.phi_bg << ", ";
             std::cout.width(2);
-            std::cout << s.size << std::endl;
+            std::cout << s.size << ", ";
+            std::cout.width(1);
+            std::cout << s.side << std::endl;
         }
 
         std::cout << std::endl;
