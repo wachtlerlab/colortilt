@@ -32,6 +32,8 @@ public:
             : window("Color Tilt Experiment", m), colorspace(cspace), stimuli(stimuli),
               c_fg(c_fg), c_bg(c_bg), board(cspace, c_fg), phy(phy_size) {
         make_current_context();
+        glfwSwapInterval(1);
+
         box.init();
         board.init();
 
