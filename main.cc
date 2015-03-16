@@ -114,14 +114,9 @@ void ct_wnd::pointer_moved(gl::point pos) {
     gl::window::pointer_moved(pos);
 
     float x = cursor.x - pos.x;
-    float y = cursor.y - pos.y;
-
-    bool s = std::signbit(x*y);
-
-    float length = std::hypot(x, y);
 
     cursor = pos;
-    phi += length * gain * (s ? -1.0 : 1.0);
+    phi += x * gain;
     phi = fmod(phi + (2.0f * M_PI), (2.0f * M_PI));
 
     cu_color = colorspace.iso_lum(phi, c_fg);
