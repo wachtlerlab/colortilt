@@ -141,7 +141,11 @@ void ct_wnd::key_event(int key, int scancode, int action, int mods) {
         }
 
         if (stim_index != 0) {
-            std::cout << cur_stim.size << ", " << cur_stim.phi_bg << ", " << cur_stim.phi_fg << ", " << phi << std::endl;
+            std::cout << cur_stim.size << ", ";
+            std::cout << cur_stim.phi_bg << ", ";
+            std::cout << cur_stim.phi_fg << ", ";
+            std::cout << phi << ", ";
+            std::cout << std::endl;
         }
         bool keep_going = next_stimulus();
         should_close(!keep_going);
