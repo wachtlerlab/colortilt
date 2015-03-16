@@ -181,12 +181,14 @@ int main(int argc, char **argv) {
 
     size_t N = 16;
     size_t R = 4;
+    double contrast = 0.16;
 
     po::options_description opts("colortilt experiment");
     opts.add_options()
             ("help", "produce help message")
             ("number,n", po::value<size_t>(&N), "number of colors to sample [default=16")
             ("repetition,r", po::value<size_t>(&R), "number of repetitions [default=4]")
+            ("contrast,C", po::value<double>(&contrast)->required())
             ("calibration,c", po::value<std::string>(&ca_path)->required());
 
     po::positional_options_description pos;
