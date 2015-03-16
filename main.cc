@@ -30,7 +30,7 @@ public:
     ct_wnd(gl::monitor m, iris::dkl &cspace, const std::vector<ct::stimulus> &stimuli,
            gl::extent phy_size, double c_fg, double c_bg)
             : window("Color Tilt Experiment", m), colorspace(cspace), stimuli(stimuli),
-              c_fg(c_fg), c_bg(c_bg), board(cspace, 0.16), phy(phy_size) {
+              c_fg(c_fg), c_bg(c_bg), board(cspace, c_fg), phy(phy_size) {
         make_current_context();
         box.init();
         board.init();
@@ -42,18 +42,6 @@ public:
 
         gr_color = colorspace.reference_gray();
         intermission = false;
-
-        std::vector<double> circ_phi = iris::linspace(0.0, 2*M_PI, 16);
-        circ_rgb.resize(circ_phi.size());
-        std::transform(circ_phi.cbegin(), circ_phi.cend(), circ_rgb.begin(), [&](const double p){
-            iris::rgb crgb = colorspace.iso_lum(p, c_fg);
-            uint8_t creport;
-            iris::rgb res = crgb.clamp(&creport);
-            if (creport != 0) {
-                std::cerr << "[W] color clamped: " << crgb << " → " << res << " @ c: " << c_fg << std::endl;
-            }
-            return res;
-        });
 
         disable_cursor();
     }
@@ -101,7 +89,6 @@ public:
     double c_bg = 0.14;
 
     ct::stimulus cur_stim;
-    std::vector<iris::rgb> circ_rgb;
 
     iris::rectangle box;
     iris::checkerboard board;
@@ -192,7 +179,6 @@ void ct_wnd::render_stimulus() {
         using std::swap;
         swap(vp_bg, vp_stim);
     }
-
 
     glClearColor(gr_color.r, gr_color.b, gr_color.b, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
