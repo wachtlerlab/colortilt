@@ -66,15 +66,22 @@ public:
     void render();
 
     bool next_stimulus() {
+
+        stim_index++;
+
+        if (stim_index >= stimuli.size()) {
+            return false;
+        }
+
         //todo: handle stimuli.empty?
-        ct::stimulus cs = stimuli[stim_index++];
+        ct::stimulus cs = stimuli[stim_index];
         cur_stim = cs;
 
         fg_color = colorspace.iso_lum(cs.phi_fg, c_fg);
         bg_color = colorspace.iso_lum(cs.phi_bg, c_bg);
         cu_color = colorspace.reference_gray();
 
-        return stim_index < stimuli.size();
+        return true;
     }
 
     iris::rgb fg_color = iris::rgb::gray();
@@ -236,6 +243,13 @@ int main(int argc, char **argv) {
 
     std::vector<ct::stimulus> stimuli = ct::stimulus::from_csv(stim_path);
     iris::dkl::parameter params = iris::dkl::parameter::from_csv(ca_path);
+
+    if (stimuli.size() == 0) {
+        std::cerr << "[E] No stimuli to present!!" << std::endl;
+        return -2;
+    }
+
+    std::cerr << "Stimuli N: " << stimuli.size() << std::endl;
 
     std::cerr << "Using rgb2sml calibration:" << std::endl;
     params.print(std::cerr);
