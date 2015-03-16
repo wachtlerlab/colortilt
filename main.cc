@@ -28,7 +28,7 @@ namespace ct = colortilt;
 class ct_wnd : public gl::window {
 public:
     ct_wnd(gl::monitor m, iris::dkl &cspace, const std::vector<ct::stimulus> &stimuli,
-           gl::extent phy_size, float c_fg, float c_bg)
+           gl::extent phy_size, double c_fg, double c_bg)
             : window("Color Tilt Experiment", m), colorspace(cspace), stimuli(stimuli),
               c_fg(c_fg), c_bg(c_bg), board(cspace, 0.16), phy(phy_size) {
         make_current_context();
@@ -124,7 +124,7 @@ void ct_wnd::pointer_moved(gl::point pos) {
     phi += length * gain * (s ? -1.0 : 1.0);
     phi = fmod(phi + (2.0f * M_PI), (2.0f * M_PI));
 
-    cu_color = colorspace.iso_lum(phi, 0.16);
+    cu_color = colorspace.iso_lum(phi, c_fg);
 }
 
 void ct_wnd::framebuffer_size_changed(gl::extent size) {
@@ -145,7 +145,7 @@ void ct_wnd::key_event(int key, int scancode, int action, int mods) {
             std::cout << cur_stim.phi_bg << ", ";
             std::cout << cur_stim.phi_fg << ", ";
             std::cout << phi << ", ";
-            std::cout << std::endl;
+            std::cout << cur_stim.side << std::endl;
         }
         bool keep_going = next_stimulus();
         should_close(!keep_going);
@@ -190,7 +190,14 @@ void ct_wnd::render_stimulus() {
 
     glm::mat4 tr_center = glm::translate(glm::mat4(1), glm::vec3(center_x, center_y, 0.0f));
 
-    glm::mat4 vp = projection * ttrans;
+    glm::mat4 vp_stim = projection * ttrans;
+    glm::mat4 vp_bg = projection;
+
+    if (cur_stim.side == 'l') {
+        using std::swap;
+        swap(vp_bg, vp_stim);
+    }
+
 
     glClearColor(gr_color.r, gr_color.b, gr_color.b, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
@@ -198,18 +205,19 @@ void ct_wnd::render_stimulus() {
     // background with color
     box.configure(gl::extent(phy.width * .5f, phy.height));
     box.configure(bg_color);
-    box.draw(vp);
+    box.draw(vp_stim);
 
     // foreground with color
     box.configure(gl::extent(stim_size, stim_size));
     box.configure(fg_color);
-    box.draw(vp * tr_center);
+    box.draw(vp_stim * tr_center);
 
     // user choice on gray background
     box.configure(gl::extent(stim_size, stim_size));
     box.configure(cu_color);
-    box.draw(projection * tr_center);
+    box.draw(vp_bg * tr_center);
 }
+
 
 int main(int argc, char **argv) {
     namespace po = boost::program_options;
@@ -263,7 +271,7 @@ int main(int argc, char **argv) {
 
     std::cerr << "Stimuli N: " << stimuli.size() << std::endl;
     std::cerr << "contrast fg: " << c_fg << std::endl;
-    std::cerr << "contrast bg: " << c_fg << std::endl;
+    std::cerr << "contrast bg: " << c_bg << std::endl;
 
 
     std::cerr << "Using rgb2sml calibration:" << std::endl;
