@@ -27,6 +27,7 @@ int main(int argc, char **argv) {
     size_t nbg = 8;
     size_t nblocks = 2;
     std::vector<float> sizes = {40, 60};
+    float angles = -1.0f;
 
     po::options_description opts("calibration tool");
     opts.add_options()
@@ -34,6 +35,7 @@ int main(int argc, char **argv) {
             ("backgrounds,b", po::value<size_t>(&nbg))
             ("foregrounds,f", po::value<size_t>(&nfg))
             ("blocks,N", po::value<size_t>(&nblocks))
+            ("angles,a", po::value<float>(&angles))
             ("sizes,s", po::value<std::vector<float>>(&sizes));
 
     po::positional_options_description pos;
@@ -51,6 +53,12 @@ int main(int argc, char **argv) {
     if (vm.count("help") > 0) {
         std::cout << opts << std::endl;
         return 0;
+    }
+
+    if (angles > -1.0f) {
+        std::transform(sizes.begin(), sizes.end(), sizes.begin(), [angles](const float v){
+            return iris::visual_angle_to_size(v, angles);
+        });
     }
 
     std::vector<double> fgs = iris::linspace(0.0, 2*M_PI, nfg);
