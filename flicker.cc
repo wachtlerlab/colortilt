@@ -31,6 +31,7 @@ struct setup {
     float   stimulus_size;
     float   mouse_gain;
     double  contrast;
+    gl::extent phy;
 };
 
 class flicker_wnd : public gl::window {
@@ -41,7 +42,7 @@ public:
         glfwSwapInterval(1);
         disable_cursor();
 
-        wsize = m.physical_size();
+        wsize = s.phy;
         box.init();
         board.init();
 
@@ -182,6 +183,9 @@ int main(int argc, char **argv) {
     size_t N = 16;
     size_t R = 4;
     double contrast = 0.16;
+    float width = 0.0f;
+    float height = 0.0f;
+
 
     po::options_description opts("colortilt experiment");
     opts.add_options()
@@ -189,7 +193,9 @@ int main(int argc, char **argv) {
             ("number,n", po::value<size_t>(&N), "number of colors to sample [default=16")
             ("repetition,r", po::value<size_t>(&R), "number of repetitions [default=4]")
             ("contrast,C", po::value<double>(&contrast)->required())
-            ("calibration,c", po::value<std::string>(&ca_path)->required());
+            ("calibration,c", po::value<std::string>(&ca_path)->required())
+            ("width,W", po::value<float>(&width))
+            ("height,H", po::value<float>(&height));
 
     po::positional_options_description pos;
 
@@ -224,6 +230,15 @@ int main(int argc, char **argv) {
     cfg.mouse_gain = 0.00001;
     cfg.gray_level = 0.66f;
 
+    gl::extent phy_size;
+    if (width > 0.0f && height > 0.0f) {
+        std::cerr << "Overwriting monitor size: " << width << "×" << height << std::endl;
+        cfg.phy.width = width;
+        cfg.phy.height = height;
+    } else {
+        cfg.phy = moni.physical_size();
+    }
+
     iris::rgb refpoint(iris::rgb::gray(cfg.gray_level));
     iris::dkl cspace(params, refpoint);
 
@@ -234,6 +249,7 @@ int main(int argc, char **argv) {
         std::cout << "# nothing to do" << std::endl;
         return 1;
     }
+
 
     flicker_wnd wnd(moni, cspace, cfg, stim);
 
