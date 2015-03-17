@@ -75,6 +75,13 @@ public:
         return true;
     }
 
+    void change_phi(double x, double gain) {
+        phi += x * gain;
+        phi = fmod(phi + (2.0f * M_PI), (2.0f * M_PI));
+
+        cu_color = colorspace.iso_lum(phi, c_fg);
+    }
+
     iris::rgb fg_color = iris::rgb::gray();
     iris::rgb bg_color = iris::rgb::gray();
     iris::rgb cu_color = iris::rgb::gray();
@@ -85,7 +92,7 @@ public:
     size_t stim_index = 0;
 
     gl::point cursor;
-    float gain = 0.001;
+    float cursor_gain = 0.000001;
     double phi = 0.0;
     double c_fg = 0.16;
     double c_bg = 0.14;
@@ -103,12 +110,7 @@ void ct_wnd::pointer_moved(gl::point pos) {
     gl::window::pointer_moved(pos);
 
     float x = cursor.x - pos.x;
-
-    cursor = pos;
-    phi += x * gain;
-    phi = fmod(phi + (2.0f * M_PI), (2.0f * M_PI));
-
-    cu_color = colorspace.iso_lum(phi, c_fg);
+    change_phi(x, cursor_gain);
 }
 
 void ct_wnd::framebuffer_size_changed(gl::extent size) {
@@ -118,11 +120,12 @@ void ct_wnd::framebuffer_size_changed(gl::extent size) {
 void ct_wnd::key_event(int key, int scancode, int action, int mods) {
     window::key_event(key, scancode, action, mods);
 
-    if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
+    if (intermission || action != GLFW_PRESS) {
+        return;
+    }
 
-        if (intermission) {
-            return;
-        }
+    float gain = mods == GLFW_MOD_SHIFT ? .5f : 0.01f;
+    if (key == GLFW_KEY_SPACE) {
 
         if (stim_index != 0) {
             std::cout << cur_stim.size << ", ";
@@ -135,6 +138,10 @@ void ct_wnd::key_event(int key, int scancode, int action, int mods) {
         should_close(!keep_going);
         intermission = true;
         board.reset_timer();
+    } else if (key == GLFW_KEY_RIGHT) {
+        change_phi(M_PI/8.0, gain);
+    } else if (key == GLFW_KEY_LEFT) {
+        change_phi(-1.0*M_PI/8.0, gain);
     }
 }
 
