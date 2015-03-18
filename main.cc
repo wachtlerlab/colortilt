@@ -216,20 +216,24 @@ int main(int argc, char **argv) {
     std::string stim_path = "-";
     float width = 0.0f;
     float height = 0.0f;
-    float gray_level = 0.66f;
+    float gray_level = 0.6667f;
     double c_fg = 0.f;
     double c_bg = 0.f;
 
+    double iso_dl = 0.0;
+    double iso_phi = 0.0;
 
     po::options_description opts("colortilt experiment");
-    opts.add_options()
+    [opts.add_options()
             ("help", "produce help message")
             ("calibration,c", po::value<std::string>(&ca_path)->required())
             ("width,W", po::value<float>(&width))
             ("height,H", po::value<float>(&height))
             ("c-fg", po::value<double>(&c_fg)->required())
             ("c-bg", po::value<double>(&c_bg)->required())
-            ("gray", po::value<float>(&gray_level), "reference gray [default=0.66]")
+            ("gray", po::value<float>(&gray_level), "reference gray [default=0.6667]")
+            ("is-dl", po::value<double>(&iso_dl))
+            ("is-phi", po::value<double>(&iso_phi))
             ("stimuli,s", po::value<std::string>(&stim_path)->required());
 
     po::positional_options_description pos;
@@ -239,6 +243,11 @@ int main(int argc, char **argv) {
     try {
         po::store(po::command_line_parser(argc, argv).options(opts).positional(pos).run(), vm);
         po::notify(vm);
+
+        if (vm.count("is-dl") != vm.count("is-phi")) {
+            throw std::invalid_argument("Need lumen and phase!");
+        }
+
     } catch (const std::exception &e) {
         std::cerr << "Error while parsing commad line options: " << std::endl;
         std::cerr << "\t" << e.what() << std::endl;
@@ -271,6 +280,10 @@ int main(int argc, char **argv) {
     params.print(std::cerr);
     iris::rgb refpoint(iris::rgb::gray(gray_level));
     iris::dkl cspace(params, refpoint);
+
+    if (vm.count("is-dl")) {
+        cspace.iso_slant(iso_dl, iso_phi);
+    }
 
     if (!glfwInit()) {
         return -1;
