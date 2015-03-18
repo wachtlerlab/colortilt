@@ -224,7 +224,7 @@ int main(int argc, char **argv) {
     double iso_phi = 0.0;
 
     po::options_description opts("colortilt experiment");
-    [opts.add_options()
+    opts.add_options()
             ("help", "produce help message")
             ("calibration,c", po::value<std::string>(&ca_path)->required())
             ("width,W", po::value<float>(&width))
