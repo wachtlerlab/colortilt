@@ -111,6 +111,7 @@ void ct_wnd::pointer_moved(gl::point pos) {
 
     float x = cursor.x - pos.x;
     change_phi(x, cursor_gain);
+    cursor = pos;
 }
 
 void ct_wnd::framebuffer_size_changed(gl::extent size) {
