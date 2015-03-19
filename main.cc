@@ -92,10 +92,10 @@ public:
     size_t stim_index = 0;
 
     gl::point cursor;
-    float cursor_gain = 0.000001;
+    float cursor_gain = 0.0001;
     double phi = 0.0;
-    double c_fg = 0.16;
-    double c_bg = 0.14;
+    double c_fg = 0.0;
+    double c_bg = 0.0;
 
     ct::stimulus cur_stim;
 
@@ -125,7 +125,7 @@ void ct_wnd::key_event(int key, int scancode, int action, int mods) {
         return;
     }
 
-    float gain = mods == GLFW_MOD_SHIFT ? .5f : 0.01f;
+    float gain = mods == GLFW_MOD_SHIFT ? .5f : 0.1f;
     if (key == GLFW_KEY_SPACE) {
 
         if (stim_index != 0) {
@@ -135,6 +135,7 @@ void ct_wnd::key_event(int key, int scancode, int action, int mods) {
             std::cout << phi << ", ";
             std::cout << cur_stim.side << std::endl;
         }
+
         bool keep_going = next_stimulus();
         should_close(!keep_going);
         intermission = true;
