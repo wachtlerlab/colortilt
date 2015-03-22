@@ -173,7 +173,15 @@ void ct_wnd::render_checkerboard() {
 
 void ct_wnd::render_stimulus() {
 
-    glm::mat4 projection = glm::ortho(0.f, phy.width, phy.height, 0.f);
+    gl::extent fb = framebuffer_size();
+    glm::mat4 px2gl = glm::ortho(0.0f, fb.width, fb.height, 0.0f);
+    glm::mat4 gl2px = glm::inverse(px2gl);
+
+    glm::mat4 tpp = glm::translate(glm::mat4(1), glm::vec3(0.375f, 0.375f, 0.0f));
+
+    glm::mat4 ppp = px2gl * tpp * gl2px;
+
+    glm::mat4 projection = ppp * glm::ortho(0.f, phy.width, phy.height, 0.f);
     glm::mat4 ttrans = glm::translate(glm::mat4(1), glm::vec3(phy.width*.5f, 0.f, 0.0f));
 
     const float stim_size = cur_stim.size;
