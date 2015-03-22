@@ -5,6 +5,7 @@ from __future__ import division
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import argparse
 plt.style.use('ggplot')
 
 def calc_angle_shift(phi, baseline, input_is_radiants=False):
@@ -17,12 +18,21 @@ def calc_angle_shift(phi, baseline, input_is_radiants=False):
     return shift
 
 
-def stderr2(x):
-    return np.std(x)/np.sqrt(2)
+def stdnerr(x):
+    return np.std(x)/np.sqrt(len(x))
 
 
 def main():
-    df = pd.read_csv('../data/ci.ck.18032015-1.csv')
+    parser = argparse.ArgumentParser(description='CT - Analysis')
+    parser.add_argument('data', nargs='+', type=str)
+    args = parser.parse_args()
+
+    df = pd.read_csv(args.data[0])
+    if len(args.data) > 1:
+        for data in args.data[1:]:
+            to_append = pd.read_csv(data)
+            df = df.append(to_append, ignore_index=True)
+
     print(df)
 
     # everything in degree
@@ -34,10 +44,10 @@ def main():
     df['fg_rel'] = df['fg'].combine(df['bg'], calc_angle_shift)
 
     gpd = df[['bg', 'fg_rel', 'size', 'shift']].groupby(['bg', 'size', 'fg_rel'])
-    dfg = gpd.agg([np.mean, stderr2])
+    dfg = gpd.agg([np.mean, stdnerr])
 
     gl = [g for g, n in gpd]
-    ad = np.concatenate((np.array(gl), gpd.agg([np.mean, stderr2]).as_matrix()), axis=1)
+    ad = np.concatenate((np.array(gl), gpd.agg([np.mean, stdnerr]).as_matrix()), axis=1)
     dfc = pd.DataFrame({'bg': ad[:, 0], 'size': ad[:, 1], 'fg': ad[:, 2], 'shift': ad[:, 3], 'err': ad[:,  4]})
 
     dfc_group = dfc.groupby(['size', 'bg'])
