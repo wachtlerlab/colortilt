@@ -55,7 +55,7 @@ def main():
     plt.figure()
     bgs = [45, 135, 225, 315]
     for idx, bg in enumerate(bgs):
-        for s in [20, 40, 60]:
+        for s in dfc['size'].unique():
             plt.subplot(2,2,idx+1)
             ga = dfc_group.get_group((s, bg))
             arr = dfc_group.get_group((s, bg))
