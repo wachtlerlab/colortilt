@@ -72,13 +72,14 @@ public:
         bg_color = colorspace.iso_lum(cs.phi_bg, c_bg);
         cu_color = colorspace.reference_gray();
 
+        phi = fmod(cs.phi_fg + M_PI + 0.1 * phi, (2.0f * M_PI));
+
         return true;
     }
 
     void change_phi(double x, double gain) {
         phi += x * gain;
         phi = fmod(phi + (2.0f * M_PI), (2.0f * M_PI));
-
         cu_color = colorspace.iso_lum(phi, c_fg);
     }
 
