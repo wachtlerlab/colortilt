@@ -122,11 +122,25 @@ void ct_wnd::framebuffer_size_changed(gl::extent size) {
 void ct_wnd::key_event(int key, int scancode, int action, int mods) {
     window::key_event(key, scancode, action, mods);
 
-    if (intermission || action != GLFW_PRESS) {
+    if (intermission) {
         return;
     }
 
-    float gain = mods == GLFW_MOD_SHIFT ? .5f : 0.1f;
+
+    if (action != GLFW_PRESS) {
+        return;
+    }
+
+    double gain = 2.25f;
+
+    if (mods == GLFW_MOD_SHIFT) {
+        gain *= 22.5f;
+    } else if (mods == GLFW_MOD_CONTROL) {
+        gain *= 1.0f;
+    } else if (mods == GLFW_MOD_ALT) {
+        gain *= .05f;
+    }
+
     if (key == GLFW_KEY_SPACE) {
 
         if (stim_index != 0) {
@@ -142,9 +156,17 @@ void ct_wnd::key_event(int key, int scancode, int action, int mods) {
         intermission = true;
         board.reset_timer();
     } else if (key == GLFW_KEY_RIGHT) {
-        change_phi(M_PI/8.0, gain);
+        change_phi(M_PI / 180.0, gain);
     } else if (key == GLFW_KEY_LEFT) {
-        change_phi(-1.0*M_PI/8.0, gain);
+        change_phi(-1.0 * M_PI / 180.0, gain);
+    } else if (key == GLFW_KEY_I) {
+        std::cerr << phi << " " << cu_color;
+    } else if (key == GLFW_KEY_R) {
+        cursor_gain = 0.0001;
+    } else if (key == GLFW_KEY_S) {
+        cursor_gain *= 0.5;
+    } else if (key == GLFW_KEY_D) {
+        cursor_gain *= 2.0;
     }
 }
 
