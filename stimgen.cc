@@ -274,7 +274,7 @@ int main(int argc, char **argv) {
         fgs = rfg.vals;
     }
 
-    if (rbg.vals.size() == 1) {
+    if (rbg.vals.size() == 1 && rbg.vals[0] > 0) {
         bgs = iris::linspace(0.0, 2 * M_PI, static_cast<size_t>(rbg.vals[0]));
         if (in_degree) {
             std::transform(bgs.cbegin(), bgs.cend(), bgs.begin(), [](double v){
