@@ -10,9 +10,9 @@ namespace iris {
 
 
 static const char vs_simple[] = R"SHDR(
-#version 330
+#version 140 
 
-layout(location = 0) in vec2 pos;
+in vec2 pos;
 
 uniform mat4 viewport;
 
@@ -23,7 +23,7 @@ void main()
 )SHDR";
 
 static const char fs_simple[] = R"SHDR(
-#version 330
+#version 140 
 
 out vec4 finalColor;
 uniform vec4 plot_color;
