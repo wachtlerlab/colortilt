@@ -220,6 +220,7 @@ int main(int argc, char **argv) {
     std::vector<float> sizes = {20, 40, 60};
     float angles = -1.0f;
     bool in_degree = false;
+    bool no_shuffle = false;
     iris::opt_range rbg(8);
     iris::opt_range rfg(16);
 
@@ -232,7 +233,8 @@ int main(int argc, char **argv) {
             ("blocks,N", po::value<size_t>(&nblocks))
             ("angles,a", po::value<float>(&angles))
             ("degree", po::value<bool>(&in_degree))
-            ("sizes,s", po::value<std::vector<float>>(&sizes));
+            ("sizes,s", po::value<std::vector<float>>(&sizes))
+            ("no-shuffle", po::value<bool>(&no_shuffle));
 
     po::positional_options_description pos;
 
@@ -309,7 +311,9 @@ int main(int argc, char **argv) {
 
     for (size_t i = 0; i < nblocks; i++) {
 
-        std::shuffle(stimuli.begin(), stimuli.end(), rnd_gen);
+        if (!no_shuffle) {
+            std::shuffle(stimuli.begin(), stimuli.end(), rnd_gen);
+        }
 
         for (ct::stimulus s : stimuli) {
             std::cout.width(8);
