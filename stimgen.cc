@@ -220,6 +220,7 @@ int main(int argc, char **argv) {
     std::vector<float> sizes = {20, 40, 60};
     float angles = -1.0f;
     bool in_degree = false;
+    bool odd_is_left = false;
     bool no_shuffle = false;
     iris::opt_range rbg(8);
     iris::opt_range rfg(16);
@@ -233,6 +234,7 @@ int main(int argc, char **argv) {
             ("blocks,N", po::value<size_t>(&nblocks))
             ("angles,a", po::value<float>(&angles))
             ("degree", po::value<bool>(&in_degree))
+            ("odd-is-left", po::value<bool>(&odd_is_left))
             ("sizes,s", po::value<std::vector<float>>(&sizes))
             ("no-shuffle", po::value<bool>(&no_shuffle));
 
@@ -297,11 +299,12 @@ int main(int argc, char **argv) {
     std::vector<ct::stimulus> stimuli;
     stimuli.reserve(total);
 
+    bool left = odd_is_left;
     for(size_t i = 0; i < fgs.size(); i++) {
         for(size_t j = 0; j < bgs.size(); j++) {
             for(size_t k = 0; k < sizes.size(); k++) {
-                char side = (i+j+k) % 2 == 0 ? 'l' : 'r';
-                stimuli.emplace_back(fgs[i], bgs[j], sizes[k], side);
+                stimuli.emplace_back(fgs[i], bgs[j], sizes[k], left ? 'l' : 'r');
+                left = !left;
             }
         }
     }
