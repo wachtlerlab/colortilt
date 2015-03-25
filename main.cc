@@ -68,15 +68,16 @@ public:
         ct::stimulus cs = stimuli[stim_index];
         cur_stim = cs;
 
-        fg_color = colorspace.iso_lum(cs.phi_fg, c_fg);
-
         if (cs.phi_bg < 0) {
             bg_color = colorspace.reference_gray();
         } else {
             bg_color = colorspace.iso_lum(cs.phi_bg, c_bg);
         }
 
-        phi = fmod(cs.phi_fg + M_PI + 0.1 * phi, (2.0f * M_PI));
+        fg_color = colorspace.iso_lum(cs.phi_fg, c_fg);
+
+        phi = fmod(cs.phi_fg + M_PI/6.0 + 0.1 * phi, (2.0f * M_PI));
+        cu_color = colorspace.iso_lum(phi, c_fg);
 
         return true;
     }
