@@ -10,12 +10,13 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 
-#include <iostream>
 #include <dkl.h>
 #include <misc.h>
 
+#include <cstdlib>
 #include <numeric>
 #include <random>
+#include <iostream>
 
 #include <boost/program_options.hpp>
 
@@ -76,7 +77,8 @@ public:
 
         fg_color = colorspace.iso_lum(cs.phi_fg, c_fg);
 
-        phi = fmod(cs.phi_fg + M_PI/6.0 + 0.1 * phi, (2.0f * M_PI));
+        double offset = (rand() % 2 == 0 ? 1.0f : -1.0f) * M_PI/6.0 + 0.1 * phi;
+        phi = fmod(cs.phi_fg + offset, (2.0f * M_PI));
         cu_color = colorspace.iso_lum(phi, c_fg);
 
         return true;
@@ -337,6 +339,8 @@ int main(int argc, char **argv) {
     } else {
         phy_size = moni.physical_size();
     }
+
+    std::srand(31337); // so random, very wow!
 
     ct_wnd wnd(moni, cspace, stimuli, phy_size, c_fg, c_bg);
 
