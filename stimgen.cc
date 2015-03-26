@@ -296,23 +296,39 @@ int main(int argc, char **argv) {
     }
 
     size_t total = fgs.size() * bgs.size() * sizes.size();
-    std::vector<ct::stimulus> stimuli;
-    stimuli.reserve(total);
+    std::vector<ct::stimulus> stimulus_template;
+    stimulus_template.reserve(total);
 
-    bool left = odd_is_left;
     for(size_t i = 0; i < fgs.size(); i++) {
         for(size_t j = 0; j < bgs.size(); j++) {
             for(size_t k = 0; k < sizes.size(); k++) {
-                stimuli.emplace_back(fgs[i], bgs[j], sizes[k], left ? 'l' : 'r');
-                left = !left;
+                stimulus_template.emplace_back(fgs[i], bgs[j], sizes[k], 0);
             }
         }
     }
+
+    std::vector<bool> positions(stimulus_template.size(), true);
+    size_t halfn = positions.size() / 2;
+    std::fill_n(positions.begin(), halfn, false);
 
     std::random_device rnd_dev;
     std::mt19937 rnd_gen(rnd_dev());
 
     for (size_t i = 0; i < nblocks; i++) {
+
+        if ((i % 2 == 0) && !no_shuffle) {
+            std::shuffle(positions.begin(), positions.end(), rnd_gen);
+        } else if (i % 2 == 1) {
+            std::for_each(positions.begin(), positions.end(), [](std::vector<bool>::reference x) {
+                x = !x;
+            });
+        }
+
+        std::vector<ct::stimulus> stimuli(stimulus_template);
+
+        for (size_t si = 0; si < stimuli.size(); si++) {
+            stimuli[si].side = positions[si] ? 'l' : 'r';
+        }
 
         if (!no_shuffle) {
             std::shuffle(stimuli.begin(), stimuli.end(), rnd_gen);
@@ -329,7 +345,6 @@ int main(int argc, char **argv) {
             std::cout << s.side << std::endl;
         }
 
-        std::cout << std::endl;
         std::cout << std::endl;
     }
 
