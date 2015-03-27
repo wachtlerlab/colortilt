@@ -55,12 +55,13 @@ def main():
     plt.figure()
     bgs = dfc['bg'].unique()
 
-    n_x = np.ceil(np.sqrt(len(bgs)))
-    n_y = np.ceil(len(bgs) / n_x)
+    pos_map = {0: (1, 2), 45: (0, 2), 90: (0, 1), 135: (0, 0), 180: (1, 0), 225: (2, 0), 270: (2, 1), 315: (2, 2)}
+    pos_idx = {k: pos_map[k][0]*3+pos_map[k][1]+1 for k in pos_map}
+
 
     for idx, bg in enumerate(bgs):
         for s in dfc['size'].unique():
-            plt.subplot(n_x, n_y, idx+1)
+            plt.subplot(3, 3, pos_idx[bg])
             arr = dfc_group.get_group((s, bg))
             plt.errorbar(arr['fg'], arr['shift'], yerr=arr['err'], label=str(s))
             if idx == 0:
