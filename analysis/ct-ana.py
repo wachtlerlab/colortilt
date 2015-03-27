@@ -47,17 +47,20 @@ def main():
     dfg = gpd.agg([np.mean, stdnerr])
 
     gl = [g for g, n in gpd]
-    ad = np.concatenate((np.array(gl), gpd.agg([np.mean, stdnerr]).as_matrix()), axis=1)
+    ad = np.concatenate((np.array(gl), dfg.as_matrix()), axis=1)
     dfc = pd.DataFrame({'bg': ad[:, 0], 'size': ad[:, 1], 'fg': ad[:, 2], 'shift': ad[:, 3], 'err': ad[:,  4]})
 
     dfc_group = dfc.groupby(['size', 'bg'])
 
     plt.figure()
     bgs = dfc['bg'].unique()
+
+    n_x = np.ceil(np.sqrt(len(bgs)))
+    n_y = np.ceil(len(bgs) / n_x)
+
     for idx, bg in enumerate(bgs):
         for s in dfc['size'].unique():
-            plt.subplot(2, 2, idx+1)
-            ga = dfc_group.get_group((s, bg))
+            plt.subplot(n_x, n_y, idx+1)
             arr = dfc_group.get_group((s, bg))
             plt.errorbar(arr['fg'], arr['shift'], yerr=arr['err'], label=str(s))
             if idx == 0:
