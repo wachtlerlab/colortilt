@@ -33,8 +33,6 @@ def main():
             to_append = pd.read_csv(data)
             df = df.append(to_append, ignore_index=True)
 
-    print(df)
-
     # everything in degree
     df['fg'] = df['fg'].apply(lambda x: np.round(x/np.pi*180.0, decimals=2))
     df['bg'] = df['bg'].apply(lambda x: np.round(x/np.pi*180.0, decimals=1))
@@ -45,6 +43,8 @@ def main():
 
     gpd = df[['bg', 'fg_rel', 'size', 'shift']].groupby(['bg', 'size', 'fg_rel'])
     dfg = gpd.agg([np.mean, stdnerr])
+
+    print(gpd.agg(len))
 
     gl = [g for g, n in gpd]
     ad = np.concatenate((np.array(gl), dfg.as_matrix()), axis=1)
@@ -74,6 +74,7 @@ def main():
 
         plt.xlabel(str(bg))
 
+    plt.suptitle('%s [%d]' % (args.data[0][3:5], len(args.data)), fontsize=12)
     plt.show()
 
 if __name__ == "__main__":
