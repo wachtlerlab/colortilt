@@ -53,10 +53,10 @@ def main():
     dfc_group = dfc.groupby(['size', 'bg'])
 
     plt.figure()
-    bgs = [45, 135, 225, 315]
+    bgs = dfc['bg'].unique()
     for idx, bg in enumerate(bgs):
         for s in dfc['size'].unique():
-            plt.subplot(2,2,idx+1)
+            plt.subplot(2, 2, idx+1)
             ga = dfc_group.get_group((s, bg))
             arr = dfc_group.get_group((s, bg))
             plt.errorbar(arr['fg'], arr['shift'], yerr=arr['err'], label=str(s))
