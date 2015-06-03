@@ -28,9 +28,9 @@ namespace ct = colortilt;
 
 class ct_wnd : public gl::window {
 public:
-    ct_wnd(gl::monitor m, iris::dkl &cspace, const std::vector<ct::stimulus> &stimuli,
+    ct_wnd(const iris::data::display &display, iris::dkl &cspace, const std::vector<ct::stimulus> &stimuli,
            gl::extent phy_size, double c_fg, double c_bg)
-            : window("Color Tilt Experiment", m), colorspace(cspace), stimuli(stimuli),
+            : window(display, "Color Tilt Experiment"), colorspace(cspace), stimuli(stimuli),
               c_fg(c_fg), c_bg(c_bg), board(cspace, c_fg), phy(phy_size) {
         make_current_context();
         glfwSwapInterval(1);
@@ -252,7 +252,6 @@ void ct_wnd::render_stimulus() {
 int main(int argc, char **argv) {
     namespace po = boost::program_options;
 
-    std::string ca_path;
     std::string stim_path = "-";
     float width = 0.0f;
     float height = 0.0f;
@@ -266,7 +265,6 @@ int main(int argc, char **argv) {
     po::options_description opts("colortilt experiment");
     opts.add_options()
             ("help", "produce help message")
-            ("calibration,c", po::value<std::string>(&ca_path)->required())
             ("width,W", po::value<float>(&width))
             ("height,H", po::value<float>(&height))
             ("c-fg", po::value<double>(&c_fg)->required())
@@ -303,8 +301,22 @@ int main(int argc, char **argv) {
         stim_path = "/dev/stdin";
     }
 
+    // the display env
+    iris::data::store store = iris::data::store::default_store();
+    std::string mdev = store.default_monitor();
+
+    iris::data::monitor moni = store.load_monitor(mdev);
+    iris::data::monitor::mode mode = moni.default_mode;
+    iris::data::display display = store.make_display(moni, mode, "gl");
+    iris::data::rgb2lms rgb2lms = store.load_rgb2lms(display);
+
+    iris::dkl::parameter params = rgb2lms.dkl_params;
+    std::cerr << "[I] rgb2sml calibration:" << std::endl;
+    params.print(std::cerr);
+
+    gl::extent phy_size(rgb2lms.width, rgb2lms.height);
+
     std::vector<ct::stimulus> stimuli = ct::stimulus::from_csv(stim_path);
-    iris::dkl::parameter params = iris::dkl::parameter::from_csv(ca_path);
 
     if (stimuli.size() == 0) {
         std::cerr << "[E] No stimuli to present!!" << std::endl;
@@ -329,20 +341,9 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    gl::monitor moni = gl::monitor::monitors().back();
-
-    gl::extent phy_size;
-    if (width > 0.0f && height > 0.0f) {
-        std::cerr << "Overwriting monitor size: " << width << "×" << height << std::endl;
-        phy_size.width = width;
-        phy_size.height = height;
-    } else {
-        phy_size = moni.physical_size();
-    }
-
     std::srand(31337); // so random, very wow!
 
-    ct_wnd wnd(moni, cspace, stimuli, phy_size, c_fg, c_bg);
+    ct_wnd wnd(display, cspace, stimuli, phy_size, c_fg, c_bg);
 
     while (! wnd.should_close()) {
         wnd.render();
