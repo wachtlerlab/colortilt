@@ -255,7 +255,7 @@ int main(int argc, char **argv) {
     std::string stim_path = "-";
     float width = 0.0f;
     float height = 0.0f;
-    float gray_level = 0.6667f;
+    float gray_level = -1;
     double c_fg = 0.f;
     double c_bg = 0.f;
 
@@ -265,11 +265,9 @@ int main(int argc, char **argv) {
     po::options_description opts("colortilt experiment");
     opts.add_options()
             ("help", "produce help message")
-            ("width,W", po::value<float>(&width))
-            ("height,H", po::value<float>(&height))
             ("c-fg", po::value<double>(&c_fg)->required())
             ("c-bg", po::value<double>(&c_bg)->required())
-            ("gray", po::value<float>(&gray_level), "reference gray [default=0.6667]")
+            ("gray", po::value<float>(&gray_level), "reference gray [default=read from rgb2lms]")
             ("is-dl", po::value<double>(&iso_dl))
             ("is-phi", po::value<double>(&iso_phi))
             ("stimuli,s", po::value<std::string>(&stim_path)->required());
@@ -311,9 +309,6 @@ int main(int argc, char **argv) {
     iris::data::rgb2lms rgb2lms = store.load_rgb2lms(display);
 
     iris::dkl::parameter params = rgb2lms.dkl_params;
-    std::cerr << "[I] rgb2sml calibration:" << std::endl;
-    params.print(std::cerr);
-
     gl::extent phy_size(rgb2lms.width, rgb2lms.height);
 
     std::vector<ct::stimulus> stimuli = ct::stimulus::from_csv(stim_path);
@@ -323,12 +318,16 @@ int main(int argc, char **argv) {
         return -2;
     }
 
-    std::cerr << "Stimuli N: " << stimuli.size() << std::endl;
-    std::cerr << "contrast fg: " << c_fg << std::endl;
-    std::cerr << "contrast bg: " << c_bg << std::endl;
+    if (gray_level < 0) {
+        gray_level = rgb2lms.gray_level;
+    }
 
+    std::cerr << "[I] Stimuli N: " << stimuli.size() << std::endl;
+    std::cerr << "[I] contrast fg: " << c_fg << std::endl;
+    std::cerr << "[I] contrast bg: " << c_bg << std::endl;
+    std::cerr << "[I] gray-level:" << gray_level << std::endl;
 
-    std::cerr << "Using rgb2sml calibration:" << std::endl;
+    std::cerr << "[I] rgb2sml calibration:" << std::endl;
     params.print(std::cerr);
     iris::rgb refpoint(iris::rgb::gray(gray_level));
     iris::dkl cspace(params, refpoint);
