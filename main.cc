@@ -253,14 +253,11 @@ int main(int argc, char **argv) {
     namespace po = boost::program_options;
 
     std::string stim_path = "-";
-    float width = 0.0f;
-    float height = 0.0f;
     float gray_level = -1;
     double c_fg = 0.f;
     double c_bg = 0.f;
 
-    double iso_dl = 0.0;
-    double iso_phi = 0.0;
+    std::string sid = "";
 
     po::options_description opts("colortilt experiment");
     opts.add_options()
@@ -268,9 +265,8 @@ int main(int argc, char **argv) {
             ("c-fg", po::value<double>(&c_fg)->required())
             ("c-bg", po::value<double>(&c_bg)->required())
             ("gray", po::value<float>(&gray_level), "reference gray [default=read from rgb2lms]")
-            ("is-dl", po::value<double>(&iso_dl))
-            ("is-phi", po::value<double>(&iso_phi))
-            ("stimuli,s", po::value<std::string>(&stim_path)->required());
+            ("stimuli,s", po::value<std::string>(&stim_path)->required())
+            ("subject,S", po::value<std::string>(&sid)->required());
 
     po::positional_options_description pos;
     pos.add("stimuli", 1);
@@ -279,10 +275,6 @@ int main(int argc, char **argv) {
     try {
         po::store(po::command_line_parser(argc, argv).options(opts).positional(pos).run(), vm);
         po::notify(vm);
-
-        if (vm.count("is-dl") != vm.count("is-phi")) {
-            throw std::invalid_argument("Need lumen and phase!");
-        }
 
     } catch (const std::exception &e) {
         std::cerr << "Error while parsing commad line options: " << std::endl;
@@ -320,21 +312,39 @@ int main(int argc, char **argv) {
 
     if (gray_level < 0) {
         gray_level = rgb2lms.gray_level;
+    } else {
+        std::cerr << "[W] overriding gray-level: ";
+        std::cerr << gray_level << "* " << rgb2lms.gray_level;
+        std::cerr << std::endl;
     }
 
     std::cerr << "[I] Stimuli N: " << stimuli.size() << std::endl;
     std::cerr << "[I] contrast fg: " << c_fg << std::endl;
     std::cerr << "[I] contrast bg: " << c_bg << std::endl;
-    std::cerr << "[I] gray-level:" << gray_level << std::endl;
+    std::cerr << "[I] gray-level: " << gray_level << std::endl;
 
     std::cerr << "[I] rgb2sml calibration:" << std::endl;
     params.print(std::cerr);
     iris::rgb refpoint(iris::rgb::gray(gray_level));
     iris::dkl cspace(params, refpoint);
 
-    if (vm.count("is-dl")) {
-        cspace.iso_slant(iso_dl, iso_phi);
+    std::vector<iris::data::subject> hits = store.find_subjects(sid);
+    if (hits.empty()) {
+        std::cerr << "Coud not find subject [" << sid << "]" << std::endl;
+    } else if (hits.size() > 1) {
+        std::cerr << "Ambigous subject string (> 1 hits): " << std::endl;
+        for (const auto &s : hits) {
+            std::cerr << "\t" << s.initials << std::endl;
+        }
     }
+
+    const iris::data::subject subject = hits.front(); // size() == 1 asserted
+    iris::data::isoslant iso = store.load_isoslant(subject);
+    cspace.iso_slant(iso.dl, iso.phi);
+
+    std::cerr << "[I] subject: " << subject.identifier() << std::endl;
+    std::cerr << "[I] isoslant: [dl: " << iso.dl << ", " << iso.phi << "]" << std::endl;
+
 
     if (!glfwInit()) {
         return -1;
