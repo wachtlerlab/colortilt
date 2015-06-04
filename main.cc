@@ -23,6 +23,21 @@
 #include "stimulus.h"
 #include "scene.h"
 
+namespace colortilt {
+
+struct response {
+
+    response(const colortilt::stimulus &s, double phi, double duration)
+            : stimulus(s), phi(phi), duration(duration) { }
+
+    colortilt::stimulus stimulus;
+
+    double phi;
+    double duration;
+};
+
+}
+
 namespace gl = glue;
 namespace ct = colortilt;
 
@@ -47,15 +62,22 @@ public:
         intermission = false;
 
         disable_cursor();
+
+
+    }
+
+    const std::vector<ct::response>& responses() const {
+        return resp;
     }
 
     virtual void framebuffer_size_changed(glue::extent size) override;
     virtual void pointer_moved(glue::point pos) override;
     virtual void key_event(int key, int scancode, int action, int mods) override;
 
+    void render();
+
     void render_stimulus();
     void render_checkerboard();
-    void render();
 
     bool next_stimulus() {
 
@@ -90,6 +112,8 @@ public:
         cu_color = colorspace.iso_lum(phi, c_fg);
     }
 
+    //member data
+
     iris::rgb fg_color = iris::rgb::gray();
     iris::rgb bg_color = iris::rgb::gray();
     iris::rgb cu_color = iris::rgb::gray();
@@ -112,6 +136,8 @@ public:
 
     gl::extent phy;
     bool intermission;
+
+    std::vector<ct::response> resp;
 };
 
 void ct_wnd::pointer_moved(gl::point pos) {
@@ -151,11 +177,13 @@ void ct_wnd::key_event(int key, int scancode, int action, int mods) {
     if (key == GLFW_KEY_SPACE) {
 
         if (stim_index != 0) {
-            std::cout << cur_stim.size << ", ";
-            std::cout << cur_stim.phi_bg << ", ";
-            std::cout << cur_stim.phi_fg << ", ";
-            std::cout << phi << ", ";
-            std::cout << cur_stim.side << std::endl;
+            std::cerr << cur_stim.size << ", ";
+            std::cerr << cur_stim.phi_bg << ", ";
+            std::cerr << cur_stim.phi_fg << ", ";
+            std::cerr << phi << ", ";
+            std::cerr << cur_stim.side << std::endl;
+
+            resp.emplace_back(cur_stim, phi, 0.0);
         }
 
         bool keep_going = next_stimulus();
@@ -360,6 +388,21 @@ int main(int argc, char **argv) {
         wnd.swap_buffers();
         glfwPollEvents();
     }
+
+    //
+    std::stringstream outstr;
+    outstr << "size, bg, fg, phi, side, duration";
+    for (const auto &resp : wnd.responses()) {
+        outstr << std::endl;
+        outstr << resp.stimulus.size << ", ";
+        outstr << resp.stimulus.phi_bg << ", ";
+        outstr << resp.stimulus.phi_fg << ", ";
+        outstr << resp.phi << ", ";
+        outstr << resp.stimulus.side << ", ";
+        outstr << resp.duration;
+    }
+
+    std::cout << outstr.str() << std::endl;
 
     glfwTerminate();
     return 0;
