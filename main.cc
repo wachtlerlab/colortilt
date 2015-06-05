@@ -44,6 +44,7 @@ struct session {
     std::string rnd;
 
     static session from_string(const std::string &str);
+
     explicit operator bool() const {
         return !stim.empty() && !rnd.empty();
     }
@@ -70,14 +71,14 @@ struct experiment {
     std::string data_path;
     std::string stim_path;
 
-    std::vector<session> sessions;
-
     static experiment from_yaml(const fs::file &path);
 
     fs::file stim_file(const session &s) const;
     fs::file rnd_file(const session &s) const;
 
     fs::file resp_file(const session &ses, const iris::data::subject &sub) const;
+
+    std::vector<session> load_sessions(const iris::data::subject &sub) const;
 };
 
 
@@ -91,12 +92,6 @@ experiment experiment::from_yaml(const fs::file &path) {
     exp.c_bg = root["contrast"]["bg"].as<double>();
     exp.data_path = root["data-path"].as<std::string>();
     exp.stim_path = root["stim-path"].as<std::string>();
-
-    YAML::Node node = root["sessions"];
-    std::transform(node.begin(), node.end(), std::back_inserter(exp.sessions),
-                   [](const YAML::Node &cn) {
-                       return session::from_string(cn.as<std::string>());
-                   });
 
     return exp;
 }
@@ -119,6 +114,29 @@ fs::file experiment::resp_file(const session &ses, const iris::data::subject &su
     return resp_file;
 }
 
+
+std::vector<session> experiment::load_sessions(const iris::data::subject &sub) const {
+    fs::file base = fs::file(stim_path);
+    fs::file session_file = base.child(sub.identifier() + ".sessions");
+
+    if (! session_file.exists()) {
+        std::cerr << "[W] EEXIST: " << session_file.path() << std::endl;
+        return std::vector<session>();
+    }
+
+    std::string data = session_file.read_all();
+
+    YAML::Node doc = YAML::Load(data);
+    YAML::Node root = doc["sessions"];
+
+    std::vector<session> sessions;
+    std::transform(root.begin(), root.end(), std::back_inserter(sessions),
+                   [](const YAML::Node &cn) {
+                       return session::from_string(cn.as<std::string>());
+                   });
+
+    return sessions;
+}
 }
 
 static glue::tf_font get_default_font() {
@@ -498,14 +516,21 @@ int main(int argc, char **argv) {
 
 
     // load the stimulus
+    std::vector<ct::session> sessions = exp.load_sessions(subject);
+    if (sessions.empty()) {
+        std::cerr << "[E] no sessions found!" << std::endl;
+        return -10;
+    } else {
+        std::cerr << "[I] " << sessions.size() << " sessions found." << std::endl;
+    }
 
     std::cerr << "[I] checking sessions" << std::endl;
     ct::session session;
-    for (const ct::session &ses : exp.sessions) {
+    for (const ct::session &ses : sessions) {
         fs::file rsf = exp.resp_file(ses, subject);
         std::cerr << "\t [" << rsf.name() << "] ";
         bool have_resp = rsf.exists();
-        std::cerr << (have_resp ? "ok" : "") << std::endl;
+        std::cerr << (have_resp ? u8"✓" : u8"︎") << std::endl;
 
         if (!have_resp) {
             session = ses;
