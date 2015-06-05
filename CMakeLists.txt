@@ -33,6 +33,15 @@ link_directories(${GLFW_LIBRARY_DIRS}
 
 set(LINK_LIBS ${LINK_LIBS} ${OPENGL_LIBRARIES} ${GLFW_LIBRARIES})
 
+#######################################
+# YAML CPP
+
+pkg_check_modules(YAMLCPP REQUIRED yaml-cpp)
+
+include_directories(${YAMLCPP_INCLUDE_DIRS})
+link_directories(${YAMLCPP_LIBRARY_DIRS})
+set(LINK_LIBS ${LINK_LIBS} ${YAMLCPP_LIBRARIES})
+
 ########################################
 # IRIS
 
