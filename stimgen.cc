@@ -216,12 +216,9 @@ int main(int argc, char **argv) {
     namespace po = boost::program_options;
 
     std::string ca_path;
-    size_t nblocks = 2;
     std::vector<float> sizes = {20, 40, 60};
     float angles = -1.0f;
     bool in_degree = false;
-    bool odd_is_left = false;
-    bool no_shuffle = false;
     iris::opt_range rbg(8);
     iris::opt_range rfg(16);
 
@@ -231,12 +228,9 @@ int main(int argc, char **argv) {
             ("help", "produce help message")
             ("backgrounds,b", po::value<iris::opt_range>(&rbg))
             ("foregrounds,f", po::value<iris::opt_range>(&rfg))
-            ("blocks,N", po::value<size_t>(&nblocks))
             ("angles,a", po::value<float>(&angles))
             ("degree", po::value<bool>(&in_degree))
-            ("odd-is-left", po::value<bool>(&odd_is_left))
-            ("sizes,s", po::value<std::vector<float>>(&sizes))
-            ("no-shuffle", po::value<bool>(&no_shuffle));
+            ("sizes,s", po::value<std::vector<float>>(&sizes));
 
     po::positional_options_description pos;
 
@@ -296,57 +290,19 @@ int main(int argc, char **argv) {
     }
 
     size_t total = fgs.size() * bgs.size() * sizes.size();
-    std::vector<ct::stimulus> stimulus_template;
-    stimulus_template.reserve(total);
+    std::vector<ct::stimulus> stimuli;
+    stimuli.reserve(total);
 
     for(size_t i = 0; i < fgs.size(); i++) {
         for(size_t j = 0; j < bgs.size(); j++) {
             for(size_t k = 0; k < sizes.size(); k++) {
-                stimulus_template.emplace_back(fgs[i], bgs[j], sizes[k], 0);
+                stimuli.emplace_back(fgs[i], bgs[j], sizes[k], 'l');
+                stimuli.emplace_back(fgs[i], bgs[j], sizes[k], 'r');
             }
         }
     }
 
-    std::vector<bool> positions(stimulus_template.size(), true);
-    size_t halfn = positions.size() / 2;
-    std::fill_n(positions.begin(), halfn, false);
-
-    std::random_device rnd_dev;
-    std::mt19937 rnd_gen(rnd_dev());
-
-    for (size_t i = 0; i < nblocks; i++) {
-
-        if ((i % 2 == 0) && !no_shuffle) {
-            std::shuffle(positions.begin(), positions.end(), rnd_gen);
-        } else if (i % 2 == 1) {
-            std::for_each(positions.begin(), positions.end(), [](std::vector<bool>::reference x) {
-                x = !x;
-            });
-        }
-
-        std::vector<ct::stimulus> stimuli(stimulus_template);
-
-        for (size_t si = 0; si < stimuli.size(); si++) {
-            stimuli[si].side = positions[si] ? 'l' : 'r';
-        }
-
-        if (!no_shuffle) {
-            std::shuffle(stimuli.begin(), stimuli.end(), rnd_gen);
-        }
-
-        for (ct::stimulus s : stimuli) {
-            std::cout.width(8);
-            std::cout << s.phi_fg << ", ";
-            std::cout.width(8);
-            std::cout << s.phi_bg << ", ";
-            std::cout.width(2);
-            std::cout << s.size << ", ";
-            std::cout.width(1);
-            std::cout << s.side << std::endl;
-        }
-
-        std::cout << std::endl;
-    }
+    ct::stimulus::to_csv(stimuli, std::cout);
 
     return 0;
 }
