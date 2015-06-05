@@ -20,6 +20,8 @@
 
 #include <boost/program_options.hpp>
 #include <yaml-cpp/yaml.h>
+#include <glue/text.h>
+#include <scene.h>
 
 #include "stimulus.h"
 #include "scene.h"
@@ -118,6 +120,20 @@ fs::file experiment::resp_file(const session &ses, const iris::data::subject &su
 }
 
 }
+
+static glue::tf_font get_default_font() {
+    iris::data::store store = iris::data::store::default_store();
+    fs::file base = store.location();
+    fs::file default_font = base.child("default.font").readlink();
+    std::cerr << default_font.path() << " " << default_font.exists() << std::endl;
+
+    if (default_font.exists()) {
+        return glue::tf_font::make(default_font.path());
+    } else {
+        return glue::tf_font{};
+    }
+}
+
 
 namespace gl = glue;
 namespace ct = colortilt;

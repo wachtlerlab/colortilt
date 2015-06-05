@@ -22,16 +22,18 @@ find_package(OpenGL REQUIRED)
 find_package(GLM REQUIRED)
 find_package(PkgConfig REQUIRED)
 pkg_search_module(GLFW REQUIRED glfw3)
+pkg_search_module(FREETYPE REQUIRED freetype2)
 
 include_directories(${GLFW_INCLUDE_DIRS}
                     ${GLM_INCLUDE_DIRS}
-                    ${OpenGL_INCLUDE_DIRS})
+                    ${OpenGL_INCLUDE_DIRS}
+                    ${FREETYPE_INCLUDE_DIRS})
 
 link_directories(${GLFW_LIBRARY_DIRS}
                  ${GLM_LIBRARY_DIRS}
                  ${OpenGL_LIBRARY_DIRS})
 
-set(LINK_LIBS ${LINK_LIBS} ${OPENGL_LIBRARIES} ${GLFW_LIBRARIES})
+set(LINK_LIBS ${LINK_LIBS} ${OPENGL_LIBRARIES} ${GLFW_LIBRARIES} ${FREETYPE_LIBRARIES})
 
 #######################################
 # YAML CPP
