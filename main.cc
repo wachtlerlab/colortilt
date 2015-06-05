@@ -385,7 +385,25 @@ void ct_wnd::render_stimulus() {
     box.draw(vp_bg * tr_center);
 }
 
+static fs::file find_experiment_file() {
 
+    static std::vector<fs::file> known_files = {
+            fs::file("colortilt.experiment"),
+            fs::file("~/colortilt.experiment"),
+            fs::file("~/experiment/colortilt.experiment"),
+            fs::file("~/experiment/colortilt/experiment")
+    };
+
+    std::cerr << "[D] Looking for exp file in: " << std::endl;
+    for (fs::file &f : known_files) {
+        std::cerr << f.path() << std::endl;
+        if (f.exists()) {
+            return f;
+        }
+    }
+
+    return fs::file();
+}
 
 
 int main(int argc, char **argv) {
@@ -420,7 +438,12 @@ int main(int argc, char **argv) {
     }
 
     // load the experiment data
-    fs::file exp_yaml = fs::file("colortilt.experiment");
+    fs::file exp_file = find_experiment_file();
+    if (exp_file.path().empty()) {
+        std::cerr << "Could not find experiment file!" << std::endl;
+        return -1;
+    }
+    fs::file exp_yaml = fs::file(exp_file);
     ct::experiment exp = ct::experiment::from_yaml(exp_yaml);
 
     std::cerr << "[I] data path: " << exp.data_path << std::endl;
