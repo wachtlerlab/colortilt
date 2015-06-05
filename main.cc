@@ -226,6 +226,7 @@ public:
     bool intermission;
 
     std::vector<ct::response> resp;
+    double stim_tstart;
 };
 
 void ct_wnd::pointer_moved(gl::point pos) {
@@ -265,13 +266,16 @@ void ct_wnd::key_event(int key, int scancode, int action, int mods) {
     if (key == GLFW_KEY_SPACE) {
 
         if (stim_index != 0) {
+            double now = glfwGetTime();
+            double dur = now - stim_tstart;
             std::cerr << cur_stim.size << ", ";
             std::cerr << cur_stim.phi_bg << ", ";
             std::cerr << cur_stim.phi_fg << ", ";
             std::cerr << phi << ", ";
-            std::cerr << cur_stim.side << std::endl;
+            std::cerr << cur_stim.side << ", ";
+            std::cerr << dur << std::endl;
 
-            resp.emplace_back(cur_stim, phi, 0.0);
+            resp.emplace_back(cur_stim, phi, dur);
         }
 
         bool keep_going = next_stimulus();
@@ -301,6 +305,7 @@ void ct_wnd::render() {
         double cb_time = board.duration();
         if (cb_time > 2.0f) {
             intermission = false;
+            stim_tstart = glfwGetTime();
         }
 
     } else {
@@ -516,7 +521,7 @@ int main(int argc, char **argv) {
         outstr << resp.stimulus.phi_fg << ", ";
         outstr << resp.phi << ", ";
         outstr << resp.stimulus.side << ", ";
-        outstr << resp.duration;
+        outstr << static_cast<float>(resp.duration);
     }
 
     std::cerr << outstr.str() << std::endl;
