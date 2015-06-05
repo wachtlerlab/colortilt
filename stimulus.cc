@@ -26,8 +26,8 @@ std::vector<stimulus> stimulus::from_csv(const std::string &path) {
         }
 
         stimulus s;
-        s.phi_fg = rec.get_double(0);
-        s.phi_bg = rec.get_double(1);
+        s.phi_bg = rec.get_double(0);
+        s.phi_fg = rec.get_double(1);
         s.size = rec.get_float(2);
         s.side = rec.get_char(3);
 
@@ -39,13 +39,13 @@ std::vector<stimulus> stimulus::from_csv(const std::string &path) {
 
 
 bool stimulus::to_csv(const std::vector<stimulus> &stimuli, std::ostream &stream) {
-    stream << "      fg,       bg, size, side";
+    stream << "      bg,       fg, size, side";
     for (stimulus s : stimuli) {
         stream << std::endl;
         stream.width(8);
-        stream << s.phi_fg << ", ";
-        stream.width(8);
         stream << s.phi_bg << ", ";
+        stream.width(8);
+        stream << s.phi_fg << ", ";
         stream.width(4);
         stream << s.size << ", ";
         stream.width(1);

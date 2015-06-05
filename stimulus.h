@@ -11,11 +11,11 @@ namespace colortilt {
 struct stimulus {
 
     stimulus() { }
-    stimulus(double fg, double bg, float size, char side)
-            : phi_fg(fg), phi_bg(bg), size(size), side(side) { }
+    stimulus(double bg, double fg, float size, char side)
+            : phi_bg(bg), phi_fg(fg), size(size), side(side) { }
 
-    double phi_fg;
     double phi_bg;
+    double phi_fg;
 
     float size;
     char  side;

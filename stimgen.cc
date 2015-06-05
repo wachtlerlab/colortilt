@@ -293,11 +293,11 @@ int main(int argc, char **argv) {
     std::vector<ct::stimulus> stimuli;
     stimuli.reserve(total);
 
-    for(size_t i = 0; i < fgs.size(); i++) {
-        for(size_t j = 0; j < bgs.size(); j++) {
+    for(size_t i = 0; i < bgs.size(); i++) {
+        for(size_t j = 0; j < fgs.size(); j++) {
             for(size_t k = 0; k < sizes.size(); k++) {
-                stimuli.emplace_back(fgs[i], bgs[j], sizes[k], 'l');
-                stimuli.emplace_back(fgs[i], bgs[j], sizes[k], 'r');
+                stimuli.emplace_back(bgs[i], fgs[j], sizes[k], 'l');
+                stimuli.emplace_back(bgs[i], fgs[j], sizes[k], 'r');
             }
         }
     }
