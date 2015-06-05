@@ -19,6 +19,7 @@
 #include <iostream>
 
 #include <boost/program_options.hpp>
+#include <yaml-cpp/yaml.h>
 
 #include "stimulus.h"
 #include "scene.h"
@@ -36,6 +37,86 @@ struct response {
     double duration;
 };
 
+struct session {
+    std::string stim;
+    std::string rnd;
+
+    static session from_string(const std::string &str);
+    explicit operator bool() const {
+        return !stim.empty() && !rnd.empty();
+    }
+};
+
+
+session session::from_string(const std::string &str) {
+    size_t pos = str.find("@");
+    if (pos == std::string::npos) {
+        throw std::runtime_error("Invalid session format");
+    }
+
+    session s;
+    s.stim = str.substr(0, pos);
+    s.rnd = str.substr(pos+1);
+
+    return s;
+}
+
+struct experiment {
+    double c_fg;
+    double c_bg;
+
+    std::string data_path;
+    std::string stim_path;
+
+    std::vector<session> sessions;
+
+    static experiment from_yaml(const fs::file &path);
+
+    fs::file stim_file(const session &s) const;
+    fs::file rnd_file(const session &s) const;
+
+    fs::file resp_file(const session &ses, const iris::data::subject &sub) const;
+};
+
+
+experiment experiment::from_yaml(const fs::file &path) {
+    std::string data = path.read_all();
+    YAML::Node doc = YAML::Load(data);
+    YAML::Node root = doc["colortilt"];
+
+    colortilt::experiment exp;
+    exp.c_fg = root["contrast"]["fg"].as<double>();
+    exp.c_bg = root["contrast"]["bg"].as<double>();
+    exp.data_path = root["data-path"].as<std::string>();
+    exp.stim_path = root["stim-path"].as<std::string>();
+
+    YAML::Node node = root["sessions"];
+    std::transform(node.begin(), node.end(), std::back_inserter(exp.sessions),
+                   [](const YAML::Node &cn) {
+                       return session::from_string(cn.as<std::string>());
+                   });
+
+    return exp;
+}
+
+
+fs::file experiment::stim_file(const session &s) const {
+    fs::file base = fs::file(stim_path);
+    return base.child(s.stim + ".stm");
+}
+
+fs::file experiment::rnd_file(const session &s) const {
+    fs::file base = fs::file(stim_path);
+    return base.child(s.rnd + ".rnd");
+}
+
+fs::file experiment::resp_file(const session &ses, const iris::data::subject &sub) const {
+    fs::file base = fs::file(data_path);
+    fs::file sub_base = base.child(sub.identifier());
+    fs::file resp_file = sub_base.child(ses.stim + "@" + ses.rnd + ".dat");
+    return resp_file;
+}
+
 }
 
 namespace gl = glue;
@@ -43,10 +124,15 @@ namespace ct = colortilt;
 
 class ct_wnd : public gl::window {
 public:
-    ct_wnd(const iris::data::display &display, iris::dkl &cspace, const std::vector<ct::stimulus> &stimuli,
-           gl::extent phy_size, double c_fg, double c_bg)
-            : window(display, "Color Tilt Experiment"), colorspace(cspace), stimuli(stimuli),
-              c_fg(c_fg), c_bg(c_bg), board(cspace, c_fg), phy(phy_size) {
+    ct_wnd(const iris::data::display &display,
+           const ct::experiment &exp,
+           iris::dkl &cspace,
+           const std::vector<ct::stimulus> &stimuli,
+           const std::vector<size_t> &rndseq,
+           gl::extent phy_size)
+            : window(display, "Color Tilt Experiment"), colorspace(cspace),
+              stimuli(stimuli), rndseq(rndseq),
+              c_fg(exp.c_fg), c_bg(exp.c_bg), board(cspace, c_fg), phy(phy_size) {
         make_current_context();
         glfwSwapInterval(1);
 
@@ -81,14 +167,15 @@ public:
 
     bool next_stimulus() {
 
-        stim_index++;
+        size_t cur_idx = stim_index++;
 
-        if (stim_index >= stimuli.size()) {
+        if (cur_idx >= stimuli.size()) {
             return false;
         }
 
-        //todo: handle stimuli.empty?
-        ct::stimulus cs = stimuli[stim_index];
+        //todo: handle rndseq.empty?
+        size_t idx = rndseq[cur_idx];
+        ct::stimulus cs = stimuli[idx];
         cur_stim = cs;
 
         if (cs.phi_bg < 0) {
@@ -121,6 +208,7 @@ public:
 
     iris::dkl &colorspace;
     const std::vector<ct::stimulus> &stimuli;
+    const std::vector<size_t> &rndseq;
     size_t stim_index = 0;
 
     gl::point cursor;
@@ -277,27 +365,22 @@ void ct_wnd::render_stimulus() {
 }
 
 
+
+
 int main(int argc, char **argv) {
     namespace po = boost::program_options;
 
-    std::string stim_path = "-";
     float gray_level = -1;
-    double c_fg = 0.f;
-    double c_bg = 0.f;
-
     std::string sid = "";
 
     po::options_description opts("colortilt experiment");
     opts.add_options()
             ("help", "produce help message")
-            ("c-fg", po::value<double>(&c_fg)->required())
-            ("c-bg", po::value<double>(&c_bg)->required())
             ("gray", po::value<float>(&gray_level), "reference gray [default=read from rgb2lms]")
-            ("stimuli,s", po::value<std::string>(&stim_path)->required())
             ("subject,S", po::value<std::string>(&sid)->required());
 
     po::positional_options_description pos;
-    pos.add("stimuli", 1);
+    pos.add("subject", 1);
 
     po::variables_map vm;
     try {
@@ -315,9 +398,12 @@ int main(int argc, char **argv) {
         return 0;
     }
 
-    if (stim_path == "-") {
-        stim_path = "/dev/stdin";
-    }
+    // load the experiment data
+    fs::file exp_yaml = fs::file("colortilt.experiment");
+    ct::experiment exp = ct::experiment::from_yaml(exp_yaml);
+
+    std::cerr << "[I] data path: " << exp.data_path << std::endl;
+    std::cerr << "[I] stim path: " << exp.stim_path << std::endl;
 
     // the display env
     iris::data::store store = iris::data::store::default_store();
@@ -331,13 +417,6 @@ int main(int argc, char **argv) {
     iris::dkl::parameter params = rgb2lms.dkl_params;
     gl::extent phy_size(rgb2lms.width, rgb2lms.height);
 
-    std::vector<ct::stimulus> stimuli = ct::stimulus::from_csv(stim_path);
-
-    if (stimuli.size() == 0) {
-        std::cerr << "[E] No stimuli to present!!" << std::endl;
-        return -2;
-    }
-
     if (gray_level < 0) {
         gray_level = rgb2lms.gray_level;
     } else {
@@ -346,9 +425,9 @@ int main(int argc, char **argv) {
         std::cerr << std::endl;
     }
 
-    std::cerr << "[I] Stimuli N: " << stimuli.size() << std::endl;
-    std::cerr << "[I] contrast fg: " << c_fg << std::endl;
-    std::cerr << "[I] contrast bg: " << c_bg << std::endl;
+
+    std::cerr << "[I] contrast fg: " << exp.c_fg << std::endl;
+    std::cerr << "[I] contrast bg: " << exp.c_bg << std::endl;
     std::cerr << "[I] gray-level: " << gray_level << std::endl;
 
     std::cerr << "[I] rgb2sml calibration:" << std::endl;
@@ -374,13 +453,51 @@ int main(int argc, char **argv) {
     std::cerr << "[I] isoslant: [dl: " << iso.dl << ", " << iso.phi << "]" << std::endl;
 
 
+    // load the stimulus
+
+    std::cerr << "[I] checking sessions" << std::endl;
+    ct::session session;
+    for (const ct::session &ses : exp.sessions) {
+        fs::file rsf = exp.resp_file(ses, subject);
+        std::cerr << "\t [" << rsf.name() << "] ";
+        bool have_resp = rsf.exists();
+        std::cerr << (have_resp ? "ok" : "") << std::endl;
+
+        if (!have_resp) {
+            session = ses;
+            break;
+        }
+    }
+
+    if (!session) {
+        std::cerr << "[E] No available session to do!" << std::endl;
+        return 0;
+    }
+
+    fs::file stim_file = exp.stim_file(session);
+    std::cerr << "[I] stim file: " << stim_file.path() << std::endl;
+
+    fs::file rnd_file = exp.rnd_file(session);
+    std::cerr << "[I] rnd# file: " << rnd_file.path() << std::endl;
+
+    std::vector<ct::stimulus> stimuli = ct::stimulus::from_csv(stim_file.path());
+    std::vector<size_t> rndseq = ct::load_rnd_data(rnd_file);
+
+    std::cerr << "[I] Stimuli N: " << stimuli.size() << std::endl;
+    std::cerr << "[I] Random# N: " << rndseq.size() << std::endl;
+
+    if (stimuli.empty() || rndseq.empty()) {
+        std::cerr << "[E] No stimuli to present!!" << std::endl;
+        return -2;
+    }
+
     if (!glfwInit()) {
         return -1;
     }
 
     std::srand(31337); // so random, very wow!
 
-    ct_wnd wnd(display, cspace, stimuli, phy_size, c_fg, c_bg);
+    ct_wnd wnd(display, exp, cspace, stimuli, rndseq, phy_size);
 
     while (! wnd.should_close()) {
         wnd.render();
@@ -402,7 +519,16 @@ int main(int argc, char **argv) {
         outstr << resp.duration;
     }
 
-    std::cout << outstr.str() << std::endl;
+    std::cerr << outstr.str() << std::endl;
+
+    if (rndseq.size() == wnd.responses().size()) {
+        fs::file rsf = exp.resp_file(session, subject);
+        fs::file data_dir = rsf.parent();
+        data_dir.mkdir_with_parents();
+        rsf.write_all(outstr.str());
+
+        std::cout << "Worte data to: " << rsf.path() << std::endl;
+    }
 
     glfwTerminate();
     return 0;
