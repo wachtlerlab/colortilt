@@ -221,8 +221,7 @@ public:
         fg_color = colorspace.iso_lum(cs.phi_fg, c_fg);
 
         double offset = (rand() % 2 == 0 ? 1.0f : -1.0f) * (M_PI/2.0 + 0.05 * phi);
-        phi = fmod((cs.phi_fg + offset + 2.0f * M_PI), (2.0f * M_PI));
-        cu_color = colorspace.iso_lum(phi, c_fg);
+        change_phi(cs.phi_fg + offset, 1.0);
 
         return true;
     }
