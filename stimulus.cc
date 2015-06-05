@@ -10,8 +10,14 @@ std::vector<stimulus> stimulus::from_csv(const std::string &path) {
     iris::csv_file fd(path);
 
     std::vector<stimulus> stimuli;
+    bool is_header = true;
     for(const auto &rec : fd) {
         if (rec.is_empty() || rec.is_comment()) {
+            continue;
+        }
+
+        if (is_header) {
+            is_header = false;
             continue;
         }
 
@@ -31,6 +37,23 @@ std::vector<stimulus> stimulus::from_csv(const std::string &path) {
     return stimuli;
 }
 
+
+bool stimulus::to_csv(const std::vector<stimulus> &stimuli, std::ostream &stream) {
+    stream << "      fg,       bg, size, side";
+    for (stimulus s : stimuli) {
+        stream << std::endl;
+        stream.width(8);
+        stream << s.phi_fg << ", ";
+        stream.width(8);
+        stream << s.phi_bg << ", ";
+        stream.width(4);
+        stream << s.size << ", ";
+        stream.width(1);
+        stream << s.side;
+    }
+
+    return true;
+}
 
 std::vector<size_t> load_rnd_data(const fs::file &f) {
     typedef iris::csv_iterator<std::string::const_iterator> csv_siterator;

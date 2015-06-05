@@ -21,6 +21,7 @@ struct stimulus {
     char  side;
 
     static std::vector<stimulus> from_csv(const std::string &path);
+    static bool to_csv(const std::vector<stimulus> &stimuli, std::ostream &stream);
 };
 
 
