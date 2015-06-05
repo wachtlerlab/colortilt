@@ -3,6 +3,7 @@
 
 #include <rgb.h>
 #include <dkl.h>
+#include <fs.h>
 
 namespace colortilt {
 
@@ -22,6 +23,8 @@ struct stimulus {
     static std::vector<stimulus> from_csv(const std::string &path);
 };
 
+
+std::vector<size_t> load_rnd_data(const fs::file &f);
 
 }
 
