@@ -169,6 +169,7 @@ public:
               c_fg(exp.c_fg), c_bg(exp.c_bg), board(cspace, c_fg), phy(phy_size) {
         make_current_context();
         glfwSwapInterval(1);
+        disable_cursor();
 
         box.init();
         board.init();
@@ -181,9 +182,8 @@ public:
         gr_color = colorspace.reference_gray();
         intermission = false;
 
-        disable_cursor();
-
-
+        progress = iris::scene::label(get_default_font(), "colortilt", 12);
+        progress.init();
     }
 
     const std::vector<ct::response>& responses() const {
@@ -223,6 +223,11 @@ public:
         double offset = (rand() % 2 == 0 ? 1.0f : -1.0f) * (M_PI/2.0 + 0.05 * phi);
         change_phi(cs.phi_fg + offset, 1.0);
 
+        //update the progress
+        std::stringstream sstr;
+        sstr << cur_idx << " of " << stimuli.size();
+        progress.text(sstr.str());
+
         return true;
     }
 
@@ -260,6 +265,8 @@ public:
 
     std::vector<ct::response> resp;
     double stim_tstart;
+
+    iris::scene::label progress;
 };
 
 void ct_wnd::pointer_moved(gl::point pos) {
@@ -403,6 +410,9 @@ void ct_wnd::render_stimulus() {
     box.configure(gl::extent(stim_size, stim_size));
     box.configure(cu_color);
     box.draw(vp_bg * tr_center);
+
+    // the progress
+    progress.draw(px2gl * tpp);
 }
 
 static fs::file find_experiment_file() {
@@ -569,6 +579,10 @@ int main(int argc, char **argv) {
     std::srand(31337); // so random, very wow!
 
     ct_wnd wnd(display, exp, cspace, stimuli, rndseq, phy_size);
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 
     while (! wnd.should_close()) {
         wnd.render();
