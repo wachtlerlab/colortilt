@@ -71,3 +71,7 @@ target_link_libraries(pp-ct ${LINK_LIBS})
 set(stimgen_SOURCES stimgen.cc stimulus.h stimulus.cc)
 add_executable(pp-ct-stimgen ${stimgen_SOURCES})
 target_link_libraries(pp-ct-stimgen ${LINK_LIBS})
+
+set(rndgen_SOURCES rndgen.cc)
+add_executable(pp-ct-rndgen ${rndgen_SOURCES})
+target_link_libraries(pp-ct-rndgen ${LINK_LIBS})
