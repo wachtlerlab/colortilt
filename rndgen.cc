@@ -18,9 +18,11 @@ bool do_debug = false;
 
 int main(int argc, char **argv) {
     namespace po = boost::program_options;
+    typedef std::mt19937 rnd_engine;
 
     size_t N = 0;
     size_t B = 1;
+    rnd_engine::result_type seed = 0;
     std::string outfile = "";
 
     po::options_description opts("colortilt - random number generator");
@@ -29,6 +31,7 @@ int main(int argc, char **argv) {
             ("file,F", po::value<std::string>(&outfile))
             ("blocks,B", po::value<size_t>(&B))
             ("number,N", po::value<size_t>(&N)->required())
+            ("seed", po::value<rnd_engine::result_type>(&seed))
             ("debug", po::value<bool>(&do_debug));
 
     po::positional_options_description pos;
@@ -53,9 +56,16 @@ int main(int argc, char **argv) {
     std::iota(numbers.begin(), numbers.end(), 0);
 
     std::random_device rnd_dev;
-    std::mt19937 rnd_gen(rnd_dev());
+    rnd_engine rnd_gen(rnd_dev());
+
+    if (seed == 0) {
+        seed = rnd_gen();
+    }
+
+    rnd_gen.seed(seed);
 
     if (do_debug) {
+        std::cerr << "#mt-seed: " << seed << std::endl;
         std::cerr << "#mt-state:  " << rnd_gen << std::endl;
     }
 
