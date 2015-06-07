@@ -218,18 +218,18 @@ int main(int argc, char **argv) {
     std::string ca_path;
     std::vector<float> sizes = {20, 40, 60};
     float angles = -1.0f;
-    bool in_degree = false;
+    bool in_radians = false;
     iris::opt_range rbg(8);
     iris::opt_range rfg(16);
 
 
-    po::options_description opts("calibration tool");
+    po::options_description opts("Generate stimuli for colortilt experiment");
     opts.add_options()
             ("help", "produce help message")
             ("backgrounds,b", po::value<iris::opt_range>(&rbg))
             ("foregrounds,f", po::value<iris::opt_range>(&rfg))
             ("angles,a", po::value<float>(&angles))
-            ("degree", po::value<bool>(&in_degree))
+            ("degree", po::value<bool>(&in_radians))
             ("sizes,s", po::value<std::vector<float>>(&sizes));
 
     po::positional_options_description pos;
@@ -258,28 +258,18 @@ int main(int argc, char **argv) {
     std::vector<double> fgs;
     std::vector<double> bgs;
     if (rfg.vals.size() == 1) {
-        fgs = iris::linspace(0.0, 2 * M_PI,static_cast<size_t>(rfg.vals[0]));
-        if (in_degree) {
-            std::transform(fgs.cbegin(), fgs.cend(), fgs.begin(), [](double v){
-                return v / M_PI * 180.0;
-            });
-        }
+        fgs = iris::linspace(0.0, 360.0, static_cast<size_t>(rfg.vals[0]));
     } else {
         fgs = rfg.vals;
     }
 
     if (rbg.vals.size() == 1 && rbg.vals[0] > 0) {
-        bgs = iris::linspace(0.0, 2 * M_PI, static_cast<size_t>(rbg.vals[0]));
-        if (in_degree) {
-            std::transform(bgs.cbegin(), bgs.cend(), bgs.begin(), [](double v){
-                return v / M_PI * 180.0;
-            });
-        }
+        bgs = iris::linspace(0.0, 360.0 , static_cast<size_t>(rbg.vals[0]));
     } else {
         bgs = rbg.vals;
     }
 
-    if (in_degree) {
+    if (in_radians) {
         std::transform(bgs.cbegin(), bgs.cend(), bgs.begin(), [](double v){
             return v / 180.0 * M_PI;
         });

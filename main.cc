@@ -215,10 +215,10 @@ public:
         if (cs.phi_bg < 0) {
             bg_color = colorspace.reference_gray();
         } else {
-            bg_color = colorspace.iso_lum(cs.phi_bg, c_bg);
+            bg_color = colorspace.iso_lum(cs.phi_bg, c_bg, true);
         }
 
-        fg_color = colorspace.iso_lum(cs.phi_fg, c_fg);
+        fg_color = colorspace.iso_lum(cs.phi_fg, c_fg, true);
 
         double offset = (rand() % 2 == 0 ? 1.0f : -1.0f) * (M_PI/2.0 + 0.05 * phi);
         change_phi(cs.phi_fg + offset, 1.0);
@@ -229,7 +229,7 @@ public:
     void change_phi(double x, double gain) {
         phi += x * gain;
         phi = fmod(phi + (2.0f * M_PI), (2.0f * M_PI));
-        cu_color = colorspace.iso_lum(phi, c_fg);
+        cu_color = colorspace.iso_lum(phi, c_fg, true);
     }
 
     //member data
@@ -301,14 +301,17 @@ void ct_wnd::key_event(int key, int scancode, int action, int mods) {
         if (stim_index != 0) {
             double now = glfwGetTime();
             double dur = now - stim_tstart;
+
+            double phi_degree = phi / M_PI * 180.0;
+
             std::cerr << cur_stim.size << ", ";
             std::cerr << cur_stim.phi_bg << ", ";
             std::cerr << cur_stim.phi_fg << ", ";
-            std::cerr << phi << ", ";
+            std::cerr << phi_degree << ", ";
             std::cerr << cur_stim.side << ", ";
             std::cerr << dur << std::endl;
 
-            resp.emplace_back(cur_stim, phi, dur);
+            resp.emplace_back(cur_stim, phi_degree, dur);
         }
 
         bool keep_going = next_stimulus();
