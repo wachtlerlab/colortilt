@@ -435,8 +435,8 @@ static fs::file find_experiment_file() {
     static std::vector<fs::file> known_files = {
             fs::file("colortilt.experiment"),
             fs::file("~/colortilt.experiment"),
-            fs::file("~/experiment/colortilt.experiment"),
-            fs::file("~/experiment/colortilt/experiment")
+            fs::file("~/experiments/colortilt.experiment"),
+            fs::file("~/experiments/colortilt/experiment")
     };
 
     std::cerr << "[D] Looking for exp file in: " << std::endl;
