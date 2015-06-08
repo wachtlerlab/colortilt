@@ -1,0 +1,7 @@
+colortilt:
+  contrast:
+    fg: 0.20
+    bg: 0.16
+  data-path: ../data
+  stim-path: ../data
+  cursor-gain: 0.001
