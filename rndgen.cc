@@ -29,6 +29,7 @@ int main(int argc, char **argv) {
     opts.add_options()
             ("help", "produce help message")
             ("file,F", po::value<std::string>(&outfile))
+            ("generate-outname,G", po::value<bool>())
             ("blocks,B", po::value<size_t>(&B))
             ("number,N", po::value<size_t>(&N)->required())
             ("seed", po::value<rnd_engine::result_type>(&seed))
@@ -64,8 +65,8 @@ int main(int argc, char **argv) {
 
     rnd_gen.seed(seed);
 
+    std::cerr << "#mt-seed: " << seed << std::endl;
     if (do_debug) {
-        std::cerr << "#mt-seed: " << seed << std::endl;
         std::cerr << "#mt-state:  " << rnd_gen << std::endl;
     }
 
@@ -108,14 +109,18 @@ int main(int argc, char **argv) {
                 }
 
                 if (alternatives) {
-                    std::cerr << "[D] alternative present!" << std::endl;
+                    if (do_debug) {
+                        std::cerr << "[D] alternative present!" << std::endl;
+                    }
                     continue;
                 }
             }
 
             size_t idx = urns[cur_urn];
 
-            std::cerr << "[D] " << cur_urn << std::endl;
+            if (do_debug) {
+                std::cerr << "[D] " << cur_urn << std::endl;
+            }
 
             if (idx < blocksize) {
                 size_t ni = idx + blocksize * cur_urn;
@@ -123,7 +128,9 @@ int main(int argc, char **argv) {
                 res.push_back(num);
                 urns[cur_urn]++;
                 last_urn = cur_urn;
-                std::cerr << "[D] * " << num << std::endl;
+                if (do_debug) {
+                    std::cerr << "[D] * " << num << std::endl;
+                }
             }
 
         }
@@ -139,9 +146,16 @@ int main(int argc, char **argv) {
         outstr << std::endl << n;
     }
 
-    if (outfile.empty()) {
+    if (outfile.empty() && vm.count("generate-outname") == 0) {
         std::cout << outstr.str() << std::endl;
     } else {
+
+        if (outfile.empty()) {
+            std::stringstream sstr;
+            sstr << N << "_" << seed << ".rnd";
+            outfile = sstr.str();
+        }
+
         fs::file outfd(outfile);
         outfd.write_all(outstr.str());
     }
