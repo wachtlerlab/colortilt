@@ -67,6 +67,7 @@ session session::from_string(const std::string &str) {
 struct experiment {
     double c_fg;
     double c_bg;
+    double cursor_gain;
 
     std::string data_path;
     std::string stim_path;
@@ -92,6 +93,7 @@ experiment experiment::from_yaml(const fs::file &path) {
     exp.c_bg = root["contrast"]["bg"].as<double>();
     exp.data_path = root["data-path"].as<std::string>();
     exp.stim_path = root["stim-path"].as<std::string>();
+    exp.cursor_gain = root["cursor-gain"].as<double>();
 
     return exp;
 }
@@ -166,7 +168,8 @@ public:
            gl::extent phy_size)
             : window(display, "Color Tilt Experiment"), colorspace(cspace),
               stimuli(stimuli), rndseq(rndseq),
-              c_fg(exp.c_fg), c_bg(exp.c_bg), board(cspace, c_fg), phy(phy_size) {
+              c_fg(exp.c_fg), c_bg(exp.c_bg),
+              cursor_gain(exp.cursor_gain), board(cspace, c_fg), phy(phy_size) {
         make_current_context();
         glfwSwapInterval(1);
         disable_cursor();
@@ -178,12 +181,20 @@ public:
 
         cur_stim.phi_fg = 1.0f;
         cur_stim.phi_bg = 1.5f;
+        cur_stim.size = 20;
+        cur_stim.side = 'r';
 
         gr_color = colorspace.reference_gray();
         intermission = false;
 
         progress = iris::scene::label(get_default_font(), "colortilt", 12);
         progress.init();
+
+        fg_color = iris::rgb::gray();
+        bg_color = iris::rgb::gray();
+        cu_color = iris::rgb::gray();
+
+        change_phi(0, 0);
     }
 
     const std::vector<ct::response>& responses() const {
@@ -239,9 +250,9 @@ public:
 
     //member data
 
-    iris::rgb fg_color = iris::rgb::gray();
-    iris::rgb bg_color = iris::rgb::gray();
-    iris::rgb cu_color = iris::rgb::gray();
+    iris::rgb fg_color;
+    iris::rgb bg_color;
+    iris::rgb cu_color;
     iris::rgb gr_color;
 
     iris::dkl &colorspace;
@@ -249,11 +260,12 @@ public:
     const std::vector<size_t> &rndseq;
     size_t stim_index = 0;
 
-    gl::point cursor;
-    float cursor_gain = 0.001;
     double phi = 0.0;
     double c_fg = 0.0;
     double c_bg = 0.0;
+
+    float cursor_gain = 0.001;
+    gl::point cursor;
 
     ct::stimulus cur_stim;
 
@@ -388,7 +400,7 @@ void ct_wnd::render_stimulus() {
     glm::mat4 vp_stim = projection * ttrans;
     glm::mat4 vp_bg = projection;
 
-    if (cur_stim.side == 'l') {
+    if (cur_stim.side == 'r') {
         using std::swap;
         swap(vp_bg, vp_stim);
     }
@@ -503,6 +515,7 @@ int main(int argc, char **argv) {
     std::cerr << "[I] contrast fg: " << exp.c_fg << std::endl;
     std::cerr << "[I] contrast bg: " << exp.c_bg << std::endl;
     std::cerr << "[I] gray-level: " << gray_level << std::endl;
+    std::cerr << "[I] cursor-gain: " << exp.cursor_gain << std::endl;
 
     std::cerr << "[I] rgb2sml calibration:" << std::endl;
     params.print(std::cerr);
