@@ -190,7 +190,7 @@ public:
         gr_color = colorspace.reference_gray();
         intermission = false;
 
-        progress = iris::scene::label(get_default_font(), "colortilt", 12);
+        progress = iris::scene::label(get_default_font(), "colortilt", 16);
         progress.init();
 
         fg_color = iris::rgb::gray();
