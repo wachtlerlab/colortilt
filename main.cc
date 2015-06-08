@@ -220,7 +220,7 @@ public:
 
         fg_color = colorspace.iso_lum(cs.phi_fg, c_fg, true);
 
-        double offset = (rand() % 2 == 0 ? 1.0f : -1.0f) * (M_PI/2.0 + 0.05 * phi);
+        double offset = (rand() % 2 == 0 ? 1.0f : -1.0f) * (360.0 + 0.05 * phi);
         change_phi(cs.phi_fg + offset, 1.0);
 
         //update the progress
@@ -233,7 +233,7 @@ public:
 
     void change_phi(double x, double gain) {
         phi += x * gain;
-        phi = fmod(phi + (2.0f * M_PI), (2.0f * M_PI));
+        phi = fmod(phi + 360.0, 360.0);
         cu_color = colorspace.iso_lum(phi, c_fg, true);
     }
 
@@ -250,7 +250,7 @@ public:
     size_t stim_index = 0;
 
     gl::point cursor;
-    float cursor_gain = 0.0001;
+    float cursor_gain = 0.001;
     double phi = 0.0;
     double c_fg = 0.0;
     double c_bg = 0.0;
