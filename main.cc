@@ -412,7 +412,7 @@ void ct_wnd::render_stimulus() {
     box.draw(vp_bg * tr_center);
 
     // the progress
-    progress.draw(px2gl * tpp);
+    progress.draw(px2gl);
 }
 
 static fs::file find_experiment_file() {
