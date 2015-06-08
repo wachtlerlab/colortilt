@@ -71,11 +71,13 @@ struct experiment {
 
     std::string data_path;
     std::string stim_path;
+    std::string sess_path;
 
     static experiment from_yaml(const fs::file &path);
 
     fs::file stim_file(const session &s) const;
     fs::file rnd_file(const session &s) const;
+    fs::file sess_file(const session &s) const;
 
     fs::file resp_file(const session &ses, const iris::data::subject &sub) const;
 
@@ -93,6 +95,7 @@ experiment experiment::from_yaml(const fs::file &path) {
     exp.c_bg = root["contrast"]["bg"].as<double>();
     exp.data_path = root["data-path"].as<std::string>();
     exp.stim_path = root["stim-path"].as<std::string>();
+    exp.sess_path = root["sess-path"].as<std::string>();
     exp.cursor_gain = root["cursor-gain"].as<double>();
 
     return exp;
@@ -118,7 +121,7 @@ fs::file experiment::resp_file(const session &ses, const iris::data::subject &su
 
 
 std::vector<session> experiment::load_sessions(const iris::data::subject &sub) const {
-    fs::file base = fs::file(stim_path);
+    fs::file base = fs::file(sess_path);
     fs::file session_file = base.child(sub.identifier() + ".sessions");
 
     if (! session_file.exists()) {
