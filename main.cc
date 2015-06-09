@@ -489,6 +489,8 @@ int main(int argc, char **argv) {
         return 0;
     }
 
+    std::string exp_start = iris::make_timestamp();
+
     // load the experiment data
     fs::file exp_file = find_experiment_file();
     if (exp_file.path().empty()) {
@@ -629,14 +631,19 @@ int main(int argc, char **argv) {
 
     std::cerr << outstr.str() << std::endl;
 
-    if (rndseq.size() == wnd.responses().size()) {
-        fs::file rsf = exp.resp_file(session, subject);
-        fs::file data_dir = rsf.parent();
-        data_dir.mkdir_with_parents();
-        rsf.write_all(outstr.str());
+    bool is_complete = rndseq.size() == wnd.responses().size();
+    
+    fs::file rsf = exp.resp_file(session, subject);
 
-        std::cout << "Worte data to: " << rsf.path() << std::endl;
+    if (! is_complete) {
+        fs::file p = rsf.parent();
+        rsf = p.child(exp_start + "_" + rsf.name() + ".x");
     }
+
+    fs::file data_dir = rsf.parent();
+    data_dir.mkdir_with_parents();
+    rsf.write_all(outstr.str());
+    std::cout << "Worte data to: " << rsf.path() << std::endl;
 
     glfwTerminate();
     return 0;
