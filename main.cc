@@ -76,9 +76,10 @@ struct experiment {
 
     static experiment from_yaml(const fs::file &path);
 
+    fs::file session_file(const iris::data::subject &s) const;
     fs::file stim_file(const session &s) const;
     fs::file rnd_file(const session &s) const;
-    fs::file sess_file(const session &s) const;
+
 
     fs::file resp_file(const session &ses, const iris::data::subject &sub) const;
 
@@ -113,6 +114,13 @@ fs::file experiment::rnd_file(const session &s) const {
     return base.child(s.rnd + ".rnd");
 }
 
+
+fs::file experiment::session_file(const iris::data::subject  &s) const {
+    fs::file base = fs::file(sess_path);
+    fs::file session_file = base.child(s.identifier() + ".sessions");
+    return session_file;
+}
+
 fs::file experiment::resp_file(const session &ses, const iris::data::subject &sub) const {
     fs::file base = fs::file(data_path);
     fs::file sub_base = base.child(sub.identifier());
@@ -120,17 +128,15 @@ fs::file experiment::resp_file(const session &ses, const iris::data::subject &su
     return resp_file;
 }
 
-
 std::vector<session> experiment::load_sessions(const iris::data::subject &sub) const {
-    fs::file base = fs::file(sess_path);
-    fs::file session_file = base.child(sub.identifier() + ".sessions");
+    fs::file session_fn = session_file(sub);
 
-    if (! session_file.exists()) {
-        std::cerr << "[W] EEXIST: " << session_file.path() << std::endl;
+    if (! session_fn.exists()) {
+        std::cerr << "[W] EEXIST: " << session_fn.path() << std::endl;
         return std::vector<session>();
     }
 
-    std::string data = session_file.read_all();
+    std::string data = session_fn.read_all();
 
     YAML::Node doc = YAML::Load(data);
     YAML::Node root = doc["sessions"];
@@ -143,6 +149,9 @@ std::vector<session> experiment::load_sessions(const iris::data::subject &sub) c
 
     return sessions;
 }
+
+
+
 }
 
 static glue::tf_font get_default_font() {
