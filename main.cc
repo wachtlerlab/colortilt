@@ -176,17 +176,21 @@ session experiment::next_session(const iris::data::subject &sub) const {
                        return name.substr(ts_size + 1, name_len);
                    });
 
-    std::cerr << "[I] checking sessions" << std::endl;
+    std::cerr << "[I] checking sessions: " << std::endl;
+    std::cerr << "\t key: # = responses / № counts of stim pattern" << std::endl;
 
     for (std::string name : dat_names) {
         std::cerr << "\t Found " << name << std::endl;
     }
 
     std::vector<session> sessions = load_sessions(sub);
-    for (const session &se : sessions) {
+    for (auto it = sessions.begin(); it != sessions.end(); ++it) {
+        const session &se = *it;
         fs::file rsf = resp_file(se, sub);
         std::string rsf_name = se.name();
-        auto n_stim = std::count_if(sessions.cbegin(), sessions.cend(),
+        // it + 1 because for reverse_iter (r) from iter (i): &*r == &*(i-1)
+        auto riter = std::reverse_iterator<std::vector<session>::iterator>(it+1);
+        auto n_stim = std::count_if(riter, sessions.rend(),
                                     [&rsf_name](const session &cur_session) {
                                         return rsf_name == cur_session.name();
                                     });
@@ -196,7 +200,7 @@ session experiment::next_session(const iris::data::subject &sub) const {
                                         return rsf_name == cur_name;
                                     });
 
-        std::cerr << "\t [" << rsf.name() << "] # " << n_resp << "/" << n_stim;
+        std::cerr << "\t [" << rsf.name() << "] #" << n_resp << "/" << n_stim << "№";
         bool needs_doing = n_resp < n_stim;
         std::cerr << (needs_doing ? u8" *" : u8" ✓") << std::endl;
 
