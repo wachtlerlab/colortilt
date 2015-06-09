@@ -336,6 +336,7 @@ void ct_wnd::key_event(int key, int scancode, int action, int mods) {
             std::cerr << cur_stim.size << ", ";
             std::cerr << cur_stim.phi_bg << ", ";
             std::cerr << cur_stim.phi_fg << ", ";
+            std::cerr << phi_start << ", ";
             std::cerr << phi << ", ";
             std::cerr << cur_stim.side << ", ";
             std::cerr << dur << std::endl;
@@ -618,12 +619,13 @@ int main(int argc, char **argv) {
 
     //
     std::stringstream outstr;
-    outstr << "size, bg, fg, phi, side, duration";
+    outstr << "size, bg, fg, phi_start, phi, side, duration";
     for (const auto &resp : wnd.responses()) {
         outstr << std::endl;
         outstr << resp.stimulus.size << ", ";
         outstr << resp.stimulus.phi_bg << ", ";
         outstr << resp.stimulus.phi_fg << ", ";
+        outstr << resp.phi_start << ", ";
         outstr << resp.phi << ", ";
         outstr << resp.stimulus.side << ", ";
         outstr << static_cast<float>(resp.duration);
