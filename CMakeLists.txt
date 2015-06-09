@@ -75,3 +75,10 @@ target_link_libraries(pp-ct-stimgen ${LINK_LIBS})
 set(rndgen_SOURCES rndgen.cc)
 add_executable(pp-ct-rndgen ${rndgen_SOURCES})
 target_link_libraries(pp-ct-rndgen ${LINK_LIBS})
+
+#########################################
+# installation
+
+install(TARGETS pp-ct-rndgen pp-ct-stimgen pp-ct
+        RUNTIME DESTINATION bin
+        COMPONENT applications)
