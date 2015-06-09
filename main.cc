@@ -80,14 +80,24 @@ struct experiment {
 
     static experiment from_yaml(const fs::file &path);
 
+    fs::file data_dir() const;
+    fs::file stim_dir() const;
+    fs::file sess_dir() const;
+    fs::file resp_dir(const iris::data::subject &sub) const;
+
     fs::file session_file(const iris::data::subject &s) const;
     fs::file stim_file(const session &s) const;
     fs::file rnd_file(const session &s) const;
-
     fs::file resp_file(const session &ses, const iris::data::subject &sub, const std::string &prefix = "") const;
 
     std::vector<session> load_sessions(const iris::data::subject &sub) const;
     session next_session(const iris::data::subject &sub) const;
+
+    //utility
+    fs::file make_file(const std::string &path) const;
+
+    // runtime data
+    fs::file source_file;
 };
 
 
@@ -104,30 +114,62 @@ experiment experiment::from_yaml(const fs::file &path) {
     exp.sess_path = root["sess-path"].as<std::string>();
     exp.cursor_gain = root["cursor-gain"].as<double>();
 
+    exp.source_file = path;
     return exp;
 }
 
+fs::file experiment::make_file(const std::string &path) const {
+    if (path.empty()) {
+        return fs::file();
+    }
+
+    if (fs::file::path_is_absolute(path)) {
+        return fs::file(path);
+    }
+
+    // handle relative paths to exp source file
+    if (path[0] == '.') {
+        return source_file.parent().child(path);
+    }
+
+    return fs::file(path);
+}
+
+fs::file experiment::data_dir() const {
+    return make_file(data_path);
+}
+
+fs::file experiment::stim_dir() const {
+    return make_file(stim_path);
+}
+
+fs::file experiment::sess_dir() const {
+    return make_file(sess_path);
+}
+
+fs::file experiment::resp_dir(const iris::data::subject &sub) const {
+    fs::file base = data_dir();
+    return base.child(sub.identifier());
+}
 
 fs::file experiment::stim_file(const session &s) const {
-    fs::file base = fs::file(stim_path);
+    fs::file base = stim_dir();
     return base.child(s.stim + ".stm");
 }
 
 fs::file experiment::rnd_file(const session &s) const {
-    fs::file base = fs::file(stim_path);
+    fs::file base = stim_dir();
     return base.child(s.rnd + ".rnd");
 }
 
-
-fs::file experiment::session_file(const iris::data::subject  &s) const {
-    fs::file base = fs::file(sess_path);
+fs::file experiment::session_file(const iris::data::subject &s) const {
+    fs::file base = sess_dir();
     fs::file session_file = base.child(s.identifier() + ".sessions");
     return session_file;
 }
 
 fs::file experiment::resp_file(const session &ses, const iris::data::subject &sub, const std::string &prefix) const {
-    fs::file base = fs::file(data_path);
-    fs::file sub_base = base.child(sub.identifier());
+    fs::file sub_base = resp_dir(sub);
     fs::file resp_file = sub_base.child(prefix + ses.name() + ".dat");
     return resp_file;
 }
@@ -159,11 +201,11 @@ session experiment::next_session(const iris::data::subject &sub) const {
     std::string timebase = iris::make_timestamp();
     const size_t ts_size = timebase.size();
 
-    fs::file base = fs::file(data_path);
-    fs::file data_dir = base.child(sub.identifier());
+    fs::file target = resp_dir(sub);
+    std::cerr << "[I] subject data dir: " << target.path() << std::endl;
 
     std::vector<fs::file> dat_files;
-    std::copy_if(data_dir.children().begin(), data_dir.children().end(),
+    std::copy_if(target.children().begin(), target.children().end(),
                  std::back_inserter(dat_files), fs::fn_matcher("*.dat"));
 
     std::vector<std::string> dat_names;
@@ -568,12 +610,17 @@ int main(int argc, char **argv) {
         std::cerr << "Could not find experiment file!" << std::endl;
         return -1;
     }
+
     fs::file exp_yaml = fs::file(exp_file);
     ct::experiment exp = ct::experiment::from_yaml(exp_yaml);
 
-    std::cerr << "[I] data path: " << exp.data_path << std::endl;
-    std::cerr << "[I] stim path: " << exp.stim_path << std::endl;
-    std::cerr << "[I] sess path: " << exp.sess_path << std::endl;
+    std::cerr << "[I] exp file: " << exp.source_file.path() << std::endl;
+    std::cerr << "[I] data path: " << exp.data_path;
+    std::cerr << " [" << exp.data_dir().path() << "]" << std::endl;
+    std::cerr << "[I] stim path: " << exp.stim_path;
+    std::cerr << " [" << exp.stim_dir().path() << "]" << std::endl;
+    std::cerr << "[I] sess path: " << exp.sess_path;
+    std::cerr << " [" << exp.sess_dir().path() << "]" << std::endl;
 
     // the display env
     iris::data::store store = iris::data::store::default_store();
