@@ -46,6 +46,10 @@ struct session {
 
     static session from_string(const std::string &str);
 
+    std::string name() const {
+        return stim + "@" + rnd;
+    }
+
     explicit operator bool() const {
         return !stim.empty() && !rnd.empty();
     }
@@ -80,10 +84,10 @@ struct experiment {
     fs::file stim_file(const session &s) const;
     fs::file rnd_file(const session &s) const;
 
-
-    fs::file resp_file(const session &ses, const iris::data::subject &sub) const;
+    fs::file resp_file(const session &ses, const iris::data::subject &sub, const std::string &prefix = "") const;
 
     std::vector<session> load_sessions(const iris::data::subject &sub) const;
+    session next_session(const iris::data::subject &sub) const;
 };
 
 
@@ -121,10 +125,10 @@ fs::file experiment::session_file(const iris::data::subject  &s) const {
     return session_file;
 }
 
-fs::file experiment::resp_file(const session &ses, const iris::data::subject &sub) const {
+fs::file experiment::resp_file(const session &ses, const iris::data::subject &sub, const std::string &prefix) const {
     fs::file base = fs::file(data_path);
     fs::file sub_base = base.child(sub.identifier());
-    fs::file resp_file = sub_base.child(ses.stim + "@" + ses.rnd + ".dat");
+    fs::file resp_file = sub_base.child(prefix + ses.name() + ".dat");
     return resp_file;
 }
 
@@ -151,7 +155,58 @@ std::vector<session> experiment::load_sessions(const iris::data::subject &sub) c
 }
 
 
+session experiment::next_session(const iris::data::subject &sub) const {
+    std::string timebase = iris::make_timestamp();
+    const size_t ts_size = timebase.size();
 
+    fs::file base = fs::file(data_path);
+    fs::file data_dir = base.child(sub.identifier());
+
+    std::vector<fs::file> dat_files;
+    std::copy_if(data_dir.children().begin(), data_dir.children().end(),
+                 std::back_inserter(dat_files), fs::fn_matcher("*.dat"));
+
+    std::vector<std::string> dat_names;
+    std::transform(dat_files.begin(), dat_files.end(),
+                   std::back_inserter(dat_names),
+                   [ts_size](const fs::file &f) {
+                       std::string name = f.name();
+                       size_t name_len = name.size();
+                       name_len -= (ts_size + 5);
+                       return name.substr(ts_size + 1, name_len);
+                   });
+
+    std::cerr << "[I] checking sessions" << std::endl;
+
+    for (std::string name : dat_names) {
+        std::cerr << "\t Found " << name << std::endl;
+    }
+
+    std::vector<session> sessions = load_sessions(sub);
+    for (const session &se : sessions) {
+        fs::file rsf = resp_file(se, sub);
+        std::string rsf_name = se.name();
+        auto n_stim = std::count_if(sessions.cbegin(), sessions.cend(),
+                                    [&rsf_name](const session &cur_session) {
+                                        return rsf_name == cur_session.name();
+                                    });
+
+        auto n_resp = std::count_if(dat_names.begin(), dat_names.end(),
+                                    [&rsf_name](const std::string &cur_name) {
+                                        return rsf_name == cur_name;
+                                    });
+
+        std::cerr << "\t [" << rsf.name() << "] # " << n_resp << "/" << n_stim;
+        bool needs_doing = n_resp < n_stim;
+        std::cerr << (needs_doing ? u8" *" : u8" ✓") << std::endl;
+
+        if (needs_doing) {
+            return se;
+        }
+    }
+
+    return colortilt::session();
+}
 }
 
 static glue::tf_font get_default_font() {
@@ -514,6 +569,7 @@ int main(int argc, char **argv) {
 
     std::cerr << "[I] data path: " << exp.data_path << std::endl;
     std::cerr << "[I] stim path: " << exp.stim_path << std::endl;
+    std::cerr << "[I] sess path: " << exp.sess_path << std::endl;
 
     // the display env
     iris::data::store store = iris::data::store::default_store();
@@ -573,19 +629,7 @@ int main(int argc, char **argv) {
         std::cerr << "[I] " << sessions.size() << " sessions found." << std::endl;
     }
 
-    std::cerr << "[I] checking sessions" << std::endl;
-    ct::session session;
-    for (const ct::session &ses : sessions) {
-        fs::file rsf = exp.resp_file(ses, subject);
-        std::cerr << "\t [" << rsf.name() << "] ";
-        bool have_resp = rsf.exists();
-        std::cerr << (have_resp ? u8"✓" : u8"︎") << std::endl;
-
-        if (!have_resp) {
-            session = ses;
-            break;
-        }
-    }
+    ct::session session = exp.next_session(subject);
 
     if (!session) {
         std::cerr << "[E] No available session to do!" << std::endl;
@@ -646,11 +690,10 @@ int main(int argc, char **argv) {
 
     bool is_complete = rndseq.size() == wnd.responses().size();
     
-    fs::file rsf = exp.resp_file(session, subject);
+    fs::file rsf = exp.resp_file(session, subject, exp_start + "_");
 
     if (! is_complete) {
-        fs::file p = rsf.parent();
-        rsf = p.child(exp_start + "_" + rsf.name() + ".x");
+        rsf = fs::file(rsf.path() + ".x");
     }
 
     fs::file data_dir = rsf.parent();
