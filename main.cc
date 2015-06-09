@@ -239,7 +239,9 @@ public:
         std::uniform_real_distribution<double> dst(-45.0, 45.0);
         double offset = dst(rd_gen);
 
+        phi = 0; // change_phi adds to current phi, so reset it
         phi_start = fmod(cs.phi_fg + offset + 360.0, 360.0);
+
         change_phi(phi_start, 1.0);
 
         //update the progress
