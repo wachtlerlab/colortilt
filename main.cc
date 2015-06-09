@@ -30,13 +30,14 @@ namespace colortilt {
 
 struct response {
 
-    response(const colortilt::stimulus &s, double phi, double duration)
-            : stimulus(s), phi(phi), duration(duration) { }
+    response(const colortilt::stimulus &s, double phi, double duration, double phi_start)
+            : stimulus(s), phi(phi), duration(duration), phi_start(phi_start) { }
 
     colortilt::stimulus stimulus;
 
     double phi;
     double duration;
+    double phi_start;
 };
 
 struct session {
@@ -172,7 +173,8 @@ public:
             : window(display, "Color Tilt Experiment"), colorspace(cspace),
               stimuli(stimuli), rndseq(rndseq),
               c_fg(exp.c_fg), c_bg(exp.c_bg),
-              cursor_gain(exp.cursor_gain), board(cspace, c_fg), phy(phy_size) {
+              cursor_gain(exp.cursor_gain), board(cspace, c_fg), phy(phy_size),
+              rd(), rd_gen(rd()) {
         make_current_context();
         glfwSwapInterval(1);
         disable_cursor();
@@ -234,8 +236,11 @@ public:
 
         fg_color = colorspace.iso_lum(cs.phi_fg, c_fg, true);
 
-        double offset = (rand() % 2 == 0 ? 1.0f : -1.0f) * (360.0 + 0.05 * phi);
-        change_phi(cs.phi_fg + offset, 1.0);
+        std::uniform_real_distribution<double> dst(-45.0, 45.0);
+        double offset = dst(rd_gen);
+
+        phi_start = fmod(cs.phi_fg + offset + 360.0, 360.0);
+        change_phi(phi_start, 1.0);
 
         //update the progress
         std::stringstream sstr;
@@ -264,6 +269,7 @@ public:
     size_t stim_index = 0;
 
     double phi = 0.0;
+    double phi_start = 0.0;
     double c_fg = 0.0;
     double c_bg = 0.0;
 
@@ -282,6 +288,9 @@ public:
     double stim_tstart;
 
     iris::scene::label progress;
+
+    std::random_device rd;
+    std::mt19937 rd_gen;
 };
 
 void ct_wnd::pointer_moved(gl::point pos) {
@@ -324,16 +333,14 @@ void ct_wnd::key_event(int key, int scancode, int action, int mods) {
             double now = glfwGetTime();
             double dur = now - stim_tstart;
 
-            double phi_degree = phi / M_PI * 180.0;
-
             std::cerr << cur_stim.size << ", ";
             std::cerr << cur_stim.phi_bg << ", ";
             std::cerr << cur_stim.phi_fg << ", ";
-            std::cerr << phi_degree << ", ";
+            std::cerr << phi << ", ";
             std::cerr << cur_stim.side << ", ";
             std::cerr << dur << std::endl;
 
-            resp.emplace_back(cur_stim, phi_degree, dur);
+            resp.emplace_back(cur_stim, phi, dur, phi_start);
         }
 
         bool keep_going = next_stimulus();
