@@ -356,7 +356,7 @@ public:
 
         //update the progress
         std::stringstream sstr;
-        sstr << cur_idx << " of " << stimuli.size();
+        sstr << cur_idx + 1 << " of " << stimuli.size();
         progress.text(sstr.str());
 
         return true;
