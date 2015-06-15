@@ -6,6 +6,10 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import argparse
+import yaml
+import sys, os
+import fnmatch
+
 plt.style.use('ggplot')
 
 def calc_angle_shift(phi, baseline, input_is_radiants=False):
@@ -30,12 +34,61 @@ def read_data(file_list):
             df = df.append(to_append, ignore_index=True)
     return df
 
+
+def is_experiment_file(path):
+    try:
+        fd = open(path)
+        l = open.readline()
+        fd.close()
+        return l.startswith('colortilt')
+    except:
+        return False
+
+def check_args(args):
+    ok = True
+    if args.experiment is None and args.data is None:
+        sys.stderr.write('Need --data or experiment argument\n')
+        ok = False
+    elif args.experiment is not None and args.data is not None:
+        sys.stderr.write('Cannot have --data AND experiment argument\n')
+        ok = False
+    return True
+
 def main():
     parser = argparse.ArgumentParser(description='CT - Analysis')
-    parser.add_argument('data', nargs='+', type=str)
+    parser.add_argument('--data', nargs='+', type=str)
+    parser.add_argument('experiment', nargs='?', type=str, default=None)
+    parser.add_argument('subject', nargs='?', type=str, default=None)
     args = parser.parse_args()
 
-    df = read_data(args.data)
+    args_ok = check_args(args)
+    if not args_ok:
+        parser.print_help(sys.stderr)
+        sys.exit(-1)
+
+    if args.experiment:
+        path = os.path.expanduser(args.experiment)
+        sys.stderr.write("[I] loading exp: %s\n" % path)
+        f = open(path)
+        exp = yaml.safe_load(f)
+        f.close()
+        data_dir = os.path.expanduser(exp['colortilt']['data-path'])
+        data_path = os.path.join(os.path.dirname(path), data_dir, args.subject)
+        if not os.path.exists(data_path):
+            sys.stderr.write('Could not load data from %s\n' % data_path)
+            sys.exit(-2)
+
+        filelist = map(lambda x: os.path.join(data_path, x),
+                       filter(lambda x: fnmatch.fnmatch(x, "*.dat"),
+                              os.listdir(data_path)))
+        print(filelist)
+        df = read_data(filelist)
+        flen = len(filelist)
+        subject = args.subject
+    else:
+        df = read_data(args.data)
+        flen = len(args.data)
+        subject = 'data'
 
     df['shift'] = df['phi'].combine(df['fg'], calc_angle_shift)
     df['fg_rel'] = df['fg'].combine(df['bg'], calc_angle_shift)
@@ -62,18 +115,21 @@ def main():
     for idx, bg in enumerate(bgs):
         for s in dfc['size'].unique():
             plt.subplot(3, 3, pos_idx[bg])
-            arr = dfc_group.get_group((s, bg))
-            plt.axhline(y=0, color='#777777')
-            plt.axvline(x=0, color='#777777')
-            plt.errorbar(arr['fg'], arr['shift'], yerr=arr['err'], label=str(s))
-            plt.xlim([-180, 180])
-            plt.ylim([-1*max_shift, max_shift])
-            if idx == 0:
-                plt.legend(loc=2)
+            try:
+                arr = dfc_group.get_group((s, bg))
+                plt.axhline(y=0, color='#777777')
+                plt.axvline(x=0, color='#777777')
+                plt.errorbar(arr['fg'], arr['shift'], yerr=arr['err'], label=str(s))
+                plt.xlim([-180, 180])
+                plt.ylim([-1*max_shift, max_shift])
+                if idx == 0:
+                    plt.legend(loc=2)
+            except KeyError:
+                sys.stderr.write('[W] %.2f %.2f not present\n' % (s, bg))
 
         plt.xlabel(str(bg))
 
-    plt.suptitle('%s [%d]' % (args.data[0][3:5], len(args.data)), fontsize=12)
+    plt.suptitle('%s [%d]' % (subject, flen), fontsize=12)
     plt.show()
 
 if __name__ == "__main__":
