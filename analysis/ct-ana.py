@@ -33,8 +33,7 @@ def main():
             to_append = pd.read_csv(data, skipinitialspace=True)
             df = df.append(to_append, ignore_index=True)
 
-
-    df['shift'] = df['match'].combine(df['fg'], calc_angle_shift)
+    df['shift'] = df['phi'].combine(df['fg'], calc_angle_shift)
     df['fg_rel'] = df['fg'].combine(df['bg'], calc_angle_shift)
 
     gpd = df[['bg', 'fg_rel', 'size', 'shift']].groupby(['bg', 'size', 'fg_rel'])
