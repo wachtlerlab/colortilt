@@ -27,10 +27,10 @@ def main():
     parser.add_argument('data', nargs='+', type=str)
     args = parser.parse_args()
 
-    df = pd.read_csv(args.data[0])
+    df = pd.read_csv(args.data[0], skipinitialspace=True)
     if len(args.data) > 1:
         for data in args.data[1:]:
-            to_append = pd.read_csv(data)
+            to_append = pd.read_csv(data, skipinitialspace=True)
             df = df.append(to_append, ignore_index=True)
 
     # everything in degree
