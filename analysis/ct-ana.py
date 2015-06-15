@@ -22,16 +22,20 @@ def stdnerr(x):
     return np.std(x)/np.sqrt(len(x))
 
 
+def read_data(file_list):
+    df = pd.read_csv(file_list[0], skipinitialspace=True)
+    if len(file_list) > 1:
+        for data in file_list[1:]:
+            to_append = pd.read_csv(data, skipinitialspace=True)
+            df = df.append(to_append, ignore_index=True)
+    return df
+
 def main():
     parser = argparse.ArgumentParser(description='CT - Analysis')
     parser.add_argument('data', nargs='+', type=str)
     args = parser.parse_args()
 
-    df = pd.read_csv(args.data[0], skipinitialspace=True)
-    if len(args.data) > 1:
-        for data in args.data[1:]:
-            to_append = pd.read_csv(data, skipinitialspace=True)
-            df = df.append(to_append, ignore_index=True)
+    df = read_data(args.data)
 
     df['shift'] = df['phi'].combine(df['fg'], calc_angle_shift)
     df['fg_rel'] = df['fg'].combine(df['bg'], calc_angle_shift)
