@@ -33,10 +33,6 @@ def main():
             to_append = pd.read_csv(data, skipinitialspace=True)
             df = df.append(to_append, ignore_index=True)
 
-    # everything in degree
-    df['fg'] = df['fg'].apply(lambda x: np.round(x/np.pi*180.0, decimals=2))
-    df['bg'] = df['bg'].apply(lambda x: np.round(x/np.pi*180.0, decimals=1))
-    df['match'] = df['match'].apply(lambda x: np.round(x/np.pi*180.0, decimals=2))
 
     df['shift'] = df['match'].combine(df['fg'], calc_angle_shift)
     df['fg_rel'] = df['fg'].combine(df['bg'], calc_angle_shift)
