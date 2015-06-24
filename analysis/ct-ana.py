@@ -57,6 +57,7 @@ def check_args(args):
 def main():
     parser = argparse.ArgumentParser(description='CT - Analysis')
     parser.add_argument('--data', nargs='+', type=str)
+    parser.add_argument('--exclude-files', dest='fnfilter', type=str)
     parser.add_argument('experiment', nargs='?', type=str, default=None)
     parser.add_argument('subject', nargs='?', type=str, default=None)
     args = parser.parse_args()
@@ -81,7 +82,10 @@ def main():
         filelist = map(lambda x: os.path.join(data_path, x),
                        filter(lambda x: fnmatch.fnmatch(x, "*.dat"),
                               os.listdir(data_path)))
-        print(filelist)
+        print(filelist, file=sys.stderr)
+        if args.fnfilter is not None:
+            filelist = filter(lambda x: not fnmatch.fnmatch(x, args.fnfilter), filelist)
+            print(filelist, file=sys.stderr)
         df = read_data(filelist)
         flen = len(filelist)
         subject = args.subject
@@ -96,41 +100,14 @@ def main():
     gpd = df[['bg', 'fg_rel', 'size', 'shift']].groupby(['bg', 'size', 'fg_rel'])
     dfg = gpd.agg([np.mean, stdnerr])
 
-    print(gpd.agg(len))
+    print(gpd.agg(len), file=sys.stderr)
 
     gl = [g for g, n in gpd]
     ad = np.concatenate((np.array(gl), dfg.as_matrix()), axis=1)
-    dfc = pd.DataFrame({'bg': ad[:, 0], 'size': ad[:, 1], 'fg': ad[:, 2], 'shift': ad[:, 3], 'err': ad[:,  4]})
+    dfc = pd.DataFrame({'bg': ad[:, 0], 'size': ad[:, 1], 'fg': ad[:, 2], 'shift': ad[:, 3], 'err': ad[:,  4], 'subject': subject})
 
-    dfc_group = dfc.groupby(['size', 'bg'])
-
-    plt.figure()
-    bgs = dfc['bg'].unique()
-
-    pos_map = {-1: (1, 1), 0: (1, 2), 45: (0, 2), 90: (0, 1), 135: (0, 0), 180: (1, 0), 225: (2, 0), 270: (2, 1), 315: (2, 2)}
-    pos_idx = {k: pos_map[k][0]*3+pos_map[k][1]+1 for k in pos_map}
-
-    max_shift = np.max(np.abs(ad[:, 3])) * 1.05
-
-    for idx, bg in enumerate(bgs):
-        for s in dfc['size'].unique():
-            plt.subplot(3, 3, pos_idx[bg])
-            try:
-                arr = dfc_group.get_group((s, bg))
-                plt.axhline(y=0, color='#777777')
-                plt.axvline(x=0, color='#777777')
-                plt.errorbar(arr['fg'], arr['shift'], yerr=arr['err'], label=str(s))
-                plt.xlim([-180, 180])
-                plt.ylim([-1*max_shift, max_shift])
-                if idx == 0:
-                    plt.legend(loc=2)
-            except KeyError:
-                sys.stderr.write('[W] %.2f %.2f not present\n' % (s, bg))
-
-        plt.xlabel(str(bg))
-
-    plt.suptitle('%s [%d]' % (subject, flen), fontsize=12)
-    plt.show()
+    print(dfc, file=sys.stderr)
+    dfc.to_csv(sys.stdout, index=False)
 
 if __name__ == "__main__":
     main()
