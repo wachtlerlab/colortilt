@@ -97,17 +97,13 @@ def main():
     df['shift'] = df['phi'].combine(df['fg'], calc_angle_shift)
     df['fg_rel'] = df['fg'].combine(df['bg'], calc_angle_shift)
 
-    gpd = df[['bg', 'fg_rel', 'size', 'shift']].groupby(['bg', 'size', 'fg_rel'])
-    dfg = gpd.agg([np.mean, stdnerr])
+    df['subject'] = subject
+    gpd = df[['bg', 'fg_rel', 'size', 'shift', 'subject']].groupby(['bg', 'size', 'fg_rel', 'subject'], as_index=False)
+    dfg = gpd.agg([np.mean, stdnerr, len])
 
-    print(gpd.agg(len), file=sys.stderr)
-
-    gl = [g for g, n in gpd]
-    ad = np.concatenate((np.array(gl), dfg.as_matrix()), axis=1)
-    dfc = pd.DataFrame({'bg': ad[:, 0], 'size': ad[:, 1], 'fg': ad[:, 2], 'shift': ad[:, 3], 'err': ad[:,  4], 'subject': subject})
-
-    print(dfc, file=sys.stderr)
-    dfc.to_csv(sys.stdout, index=False)
+    x = dfg.reset_index()
+    x.columns = ['bg','size','fg', 'subject', 'shift','err','N']
+    x.to_csv(sys.stdout, index=False)
 
 if __name__ == "__main__":
     main()
