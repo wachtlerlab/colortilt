@@ -4,7 +4,6 @@ from __future__ import division
 
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 import argparse
 import yaml
 import sys, os
@@ -12,7 +11,6 @@ import fnmatch
 from datetime import date
 import time
 
-plt.style.use('ggplot')
 
 def main():
     allfiles = os.listdir(sys.argv[1])
