@@ -82,6 +82,8 @@ def plot_delta(df):
     fig = plt.figure()
     bgs = sorted(df['bg'].unique())
 
+    x_stop = df['40'].max() * 1.05
+
     colors = angles_to_color(bgs)
     fig.hold()
     raw = True
@@ -90,9 +92,15 @@ def plot_delta(df):
         print(arr, file=sys.stderr)
         x = arr['40'] if raw else np.abs(arr['40'])
         y = arr['delta'] if raw else np.abs(arr['delta'])
+        p = np.polyfit(x, y, 1)
+        px = np.arange(0, x_stop, 0.5)
+        py = np.polyval(p, px)
+        plt.plot(px, py, color=colors[idx], label=str(bg))
         plt.scatter(x, y, color=colors[idx])
+
     plt.xlabel('40 degree')
     plt.ylabel('10 - 160 degree')
+    plt.legend(loc=2)
 
 
 def plot_ratio(df):
