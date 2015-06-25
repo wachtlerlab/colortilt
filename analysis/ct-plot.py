@@ -13,6 +13,9 @@ import fnmatch
 plt.style.use('ggplot')
 
 def read_data(file_list):
+    if len(file_list) == 1 and file_list[0] == '-':
+        file_list[0] = sys.stdin
+
     df = pd.read_csv(file_list[0], skipinitialspace=True)
     if len(file_list) > 1:
         for data in file_list[1:]:
