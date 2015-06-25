@@ -100,6 +100,9 @@ class ColortiltExperiment(object):
             for data in file_list[1:]:
                 to_append = pd.read_csv(data, skipinitialspace=True)
                 df = df.append(to_append, ignore_index=True)
+        notused = set(df.columns) - {'size', 'bg', 'fg', 'phi_start', 'side', 'duration', 'phi'}
+        for column in list(notused):
+            del df[column]
         df['subject'] = subject
         return df
 
