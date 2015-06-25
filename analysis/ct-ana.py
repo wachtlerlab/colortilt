@@ -4,13 +4,10 @@ from __future__ import division
 
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 import argparse
 import yaml
 import sys, os
 import fnmatch
-
-plt.style.use('ggplot')
 
 def calc_angle_shift(phi, baseline, input_is_radiants=False):
     if input_is_radiants:
