@@ -44,6 +44,7 @@ def is_experiment_file(path):
     except:
         return False
 
+
 def check_args(args):
     ok = True
     if args.experiment is None and args.data is None:
@@ -53,6 +54,30 @@ def check_args(args):
         sys.stderr.write('Cannot have --data AND experiment argument\n')
         ok = False
     return True
+
+
+class ColortiltExperiment(object):
+
+    def __init__(self, data, path):
+        self.__data = data
+        self.path = path
+
+    @staticmethod
+    def load_from_path(path):
+        path = os.path.expanduser(path)
+        sys.stderr.write("[I] loading exp: %s\n" % path)
+        f = open(path)
+        exp_yaml = yaml.safe_load(f)
+        f.close()
+        exp = exp_yaml['colortilt']
+        return ColortiltExperiment(exp, path)
+
+    def subject_data_path(self, subject):
+        data_dir = os.path.expanduser(self.__data['data-path'])
+        data_path = os.path.join(os.path.dirname(self.path), data_dir, subject)
+        if not os.path.exists(data_path):
+            raise IOError('Could not load data from %s\n' % data_path)
+        return data_path
 
 def main():
     parser = argparse.ArgumentParser(description='CT - Analysis')
@@ -68,13 +93,8 @@ def main():
         sys.exit(-1)
 
     if args.experiment:
-        path = os.path.expanduser(args.experiment)
-        sys.stderr.write("[I] loading exp: %s\n" % path)
-        f = open(path)
-        exp = yaml.safe_load(f)
-        f.close()
-        data_dir = os.path.expanduser(exp['colortilt']['data-path'])
-        data_path = os.path.join(os.path.dirname(path), data_dir, args.subject)
+        exp = ColortiltExperiment.load_from_path(args.experiment)
+        data_path = exp.subject_data_path(args.subject)
         if not os.path.exists(data_path):
             sys.stderr.write('Could not load data from %s\n' % data_path)
             sys.exit(-2)
@@ -102,7 +122,7 @@ def main():
     dfg = gpd.agg([np.mean, stdnerr, len])
 
     x = dfg.reset_index()
-    x.columns = ['bg','size','fg', 'subject', 'shift','err','N']
+    x.columns = ['bg', 'size', 'fg', 'subject', 'shift', 'err', 'N']
     x.to_csv(sys.stdout, index=False)
 
 if __name__ == "__main__":
