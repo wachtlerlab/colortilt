@@ -93,6 +93,15 @@ class ColortiltExperiment(object):
             filelist = filter(filterfn, filelist)
         return filelist
 
+    def load_result_data(self, subject, filterfn=None):
+        file_list = self.result_file_list(subject, filterfn=filterfn)
+        df = pd.read_csv(file_list[0], skipinitialspace=True)
+        if len(file_list) > 1:
+            for data in file_list[1:]:
+                to_append = pd.read_csv(data, skipinitialspace=True)
+                df = df.append(to_append, ignore_index=True)
+        df['subject'] = subject
+        return df
 
 def main():
     parser = argparse.ArgumentParser(description='CT - Analysis')
@@ -109,17 +118,14 @@ def main():
 
     if args.experiment:
         exp = ColortiltExperiment.load_from_path(args.experiment)
-        filelist = exp.result_file_list(args.subject, args.fnfilter)
-        df = read_data(filelist)
-        subject = args.subject
+        df = exp.load_result_data(args.subject, args.fnfilter)
     else:
         df = read_data(args.data)
-        subject = 'data'
+        df['subject'] = 'data'
 
     df['shift'] = df['phi'].combine(df['fg'], calc_angle_shift)
     df['fg_rel'] = df['fg'].combine(df['bg'], calc_angle_shift)
 
-    df['subject'] = subject
     gpd = df[['bg', 'fg_rel', 'size', 'shift', 'subject']].groupby(['bg', 'size', 'fg_rel', 'subject'], as_index=False)
     dfg = gpd.agg([np.mean, stdnerr, len])
 
