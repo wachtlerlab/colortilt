@@ -129,6 +129,29 @@ def plot_ratio(df):
 
     return fig
 
+def plot_sizerel(df):
+    dfc_group = df.groupby('bg')
+
+    fig = plt.figure()
+    bgs = sorted(df['bg'].unique())
+
+    colors = angles_to_color(bgs)
+    fig.hold()
+
+    for idx, bg in enumerate(bgs):
+        arr = dfc_group.get_group(bg)
+        print(arr, file=sys.stderr)
+        plt.subplot(1, 2, 1)
+        plt.plot(np.log2(arr['size']), arr['m_plus'], color=colors[idx])
+        plt.scatter(np.log2(arr['size']), arr['m_plus'], color=colors[idx], marker='.', s=80, label='%s +' % str(bg))
+        plt.subplot(1, 2, 2)
+        plt.plot(np.log2(arr['size']), -1*arr['m_minus'], color=colors[idx])
+        plt.scatter(np.log2(arr['size']), -1*arr['m_minus'], color=colors[idx], marker="1", s=80, label='%s -' % str(bg))
+    plt.subplot(1, 2, 1)
+    plt.xlabel('size')
+    plt.ylabel('induction')
+    plt.legend()
+
 
 def main():
     parser = argparse.ArgumentParser(description='CT - Analysis')
@@ -144,6 +167,8 @@ def main():
         plot_ratio(df)
     elif 'delta' in df.columns:
         plot_delta(df)
+    elif 'm_plus' in df.columns:
+        plot_sizerel(df)
     else:
         raise ValueError('Unknown data set')
 
