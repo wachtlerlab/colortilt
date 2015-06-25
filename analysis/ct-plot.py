@@ -85,6 +85,8 @@ def plot_delta(df):
     colors = angles_to_color(bgs)
     fig.hold()
     raw = True
+    slope = []
+
     for idx, bg in enumerate(bgs):
         arr = dfc_group.get_group(bg)
         print(arr, file=sys.stderr)
@@ -93,12 +95,20 @@ def plot_delta(df):
         p = np.polyfit(x, y, 1)
         px = np.arange(0, x_stop, 0.5)
         py = np.polyval(p, px)
+        print(p, file=sys.stderr)
+        slope.append(p[0])
+        plt.subplot(1, 2, 1)
         plt.plot(px, py, color=colors[idx], label=str(bg))
         plt.scatter(x, y, color=colors[idx])
-
     plt.xlabel('40 degree')
     plt.ylabel('10 - 160 degree')
     plt.legend(loc=2)
+
+    plt.subplot(1, 2, 2, polar=True)
+    plt.hold()
+    print(slope, file=sys.stderr)
+    plt.scatter(map(lambda x: x/180.0*np.pi, bgs), slope, c=colors, s=40)
+
 
 
 def plot_ratio(df):
@@ -157,7 +167,10 @@ def plot_sizerel(df):
     plt.xlabel('size')
     plt.ylabel('induction')
     plt.legend()
-
+    plt.subplot(1, 2, 2)
+    plt.xlabel('size')
+    plt.ylabel('induction')
+    plt.legend()
 
 def main():
     parser = argparse.ArgumentParser(description='CT - Analysis')
