@@ -21,14 +21,20 @@ def read_data(file_list):
             df = df.append(to_append, ignore_index=True)
     return df
 
+
+def make_idx2pos():
+    pos_map = {-1: (1, 1), 0: (1, 2), 45: (0, 2), 90: (0, 1), 135: (0, 0), 180: (1, 0), 225: (2, 0), 270: (2, 1), 315: (2, 2)}
+    pos_idx = {k: pos_map[k][0]*3+pos_map[k][1]+1 for k in pos_map}
+    return pos_idx
+
+
 def plot_shifts(df):
     dfc_group = df.groupby(['size', 'bg'])
 
     fig = plt.figure()
     bgs = df['bg'].unique()
 
-    pos_map = {-1: (1, 1), 0: (1, 2), 45: (0, 2), 90: (0, 1), 135: (0, 0), 180: (1, 0), 225: (2, 0), 270: (2, 1), 315: (2, 2)}
-    pos_idx = {k: pos_map[k][0]*3+pos_map[k][1]+1 for k in pos_map}
+    pos_idx = make_idx2pos()
 
     max_shift = np.max(np.abs(df['shift'])) * 1.05
 
@@ -116,8 +122,7 @@ def plot_ratio(df):
 
     dfc_group = df.groupby(['subject', 'bg'])
     bgs = df['bg'].unique()
-    pos_map = {-1: (1, 1), 0: (1, 2), 45: (0, 2), 90: (0, 1), 135: (0, 0), 180: (1, 0), 225: (2, 0), 270: (2, 1), 315: (2, 2)}
-    pos_idx = {k: pos_map[k][0]*3+pos_map[k][1]+1 for k in pos_map}
+    pos_idx = make_idx2pos()
 
     max_ratio = np.max(np.abs(df['ratio'])) * 1.05
     df = df.sort(['bg', 'subject'])
