@@ -23,17 +23,10 @@ def read_data(file_list):
             df = df.append(to_append, ignore_index=True)
     return df
 
-def main():
-    parser = argparse.ArgumentParser(description='CT - Analysis')
-    parser.add_argument('data', type=str, nargs='+', default='-')
-    args = parser.parse_args()
-
-    df = read_data(args.data)
-    print(df, file=sys.stderr)
-
+def plot_shifts(df):
     dfc_group = df.groupby(['size', 'bg'])
 
-    plt.figure()
+    fig = plt.figure()
     bgs = df['bg'].unique()
 
     pos_map = {-1: (1, 1), 0: (1, 2), 45: (0, 2), 90: (0, 1), 135: (0, 0), 180: (1, 0), 225: (2, 0), 270: (2, 1), 315: (2, 2)}
@@ -53,14 +46,32 @@ def main():
                 plt.errorbar(arr['fg'], arr['shift'], yerr=arr['err'], label=str(s))
                 plt.xlim([-180, 180])
                 plt.ylim([-1*max_shift, max_shift])
-                if idx == 0:
+                if pos_idx[bg] == 6:
                     plt.legend(loc=2)
             except KeyError:
                 sys.stderr.write('[W] %.2f %.2f not present\n' % (s, bg))
 
         plt.xlabel(str(bg))
 
-    #plt.suptitle('%s [%d]' % (subject, flen), fontsize=12)
+    subjects = df['subject'].unique()
+    if len(subjects) == 1:
+        plt.suptitle('%s' % (subjects[0]), fontsize=12)
+
+    return fig
+
+def main():
+    parser = argparse.ArgumentParser(description='CT - Analysis')
+    parser.add_argument('data', type=str, nargs='+', default='-')
+    args = parser.parse_args()
+
+    df = read_data(args.data)
+    print(df, file=sys.stderr)
+
+    if 'shift' in df.columns:
+        plot_shifts(df)
+    else:
+        raise ValueError('Unknown data set')
+
     plt.show()
 
 if __name__ == '__main__':
