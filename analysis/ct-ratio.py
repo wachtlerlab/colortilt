@@ -3,12 +3,8 @@ from __future__ import print_function
 from __future__ import division
 
 import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
 import argparse
-import yaml
-import sys, os
-import fnmatch
+import sys
 
 def read_data(file_list):
     if len(file_list) == 1 and file_list[0] == '-':

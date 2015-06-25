@@ -6,9 +6,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import argparse
-import yaml
-import sys, os
-import fnmatch
+import sys
 
 plt.style.use('ggplot')
 
