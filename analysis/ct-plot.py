@@ -60,6 +60,41 @@ def plot_shifts(df):
     return fig
 
 
+def angles_to_color(angles):
+    def rgb(r, g, b):
+        return "#%02x%02x%02x" % (r, g, b)
+
+    bg = list(np.arange(0, 360, 360.0/8))
+    cls = [rgb(252, 38, 28),
+           rgb(253, 77, 252),
+           rgb(13, 66, 251),
+           rgb(49, 183, 229),
+           rgb(26, 176, 29),
+           rgb(181, 248, 50),
+           rgb(216, 202, 43),
+           rgb(252, 151, 39)]
+    return [cls[bg.index(a)] for a in angles]
+
+
+def plot_delta(df):
+    dfc_group = df.groupby('bg')
+
+    fig = plt.figure()
+    bgs = sorted(df['bg'].unique())
+
+    colors = angles_to_color(bgs)
+    fig.hold()
+    raw = True
+    for idx, bg in enumerate(bgs):
+        arr = dfc_group.get_group(bg)
+        print(arr, file=sys.stderr)
+        x = arr['40'] if raw else np.abs(arr['40'])
+        y = arr['delta'] if raw else np.abs(arr['delta'])
+        plt.scatter(x, y, color=colors[idx])
+    plt.xlabel('40 degree')
+    plt.ylabel('10 - 160 degree')
+
+
 def plot_ratio(df):
     fig = plt.figure()
 
@@ -107,6 +142,8 @@ def main():
         plot_shifts(df)
     elif 'ratio' in df.columns:
         plot_ratio(df)
+    elif 'delta' in df.columns:
+        plot_delta(df)
     else:
         raise ValueError('Unknown data set')
 
