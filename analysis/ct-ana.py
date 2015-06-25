@@ -79,6 +79,21 @@ class ColortiltExperiment(object):
             raise IOError('Could not load data from %s\n' % data_path)
         return data_path
 
+    def result_file_list(self, subject, filterfn=None):
+        data_path = self.subject_data_path(subject)
+        filelist = map(lambda x: os.path.join(data_path, x),
+                       filter(lambda x: fnmatch.fnmatch(x, "*.dat"),
+                              os.listdir(data_path)))
+        if filterfn is not None:
+            if not callable(filterfn):
+                if type(filterfn) == str:
+                    filterfn = lambda x: not fnmatch.fnmatch(x, filterfn)
+                else:
+                    raise ValueError('Unsupported filter')
+            filelist = filter(filterfn, filelist)
+        return filelist
+
+
 def main():
     parser = argparse.ArgumentParser(description='CT - Analysis')
     parser.add_argument('--data', nargs='+', type=str)
@@ -94,24 +109,11 @@ def main():
 
     if args.experiment:
         exp = ColortiltExperiment.load_from_path(args.experiment)
-        data_path = exp.subject_data_path(args.subject)
-        if not os.path.exists(data_path):
-            sys.stderr.write('Could not load data from %s\n' % data_path)
-            sys.exit(-2)
-
-        filelist = map(lambda x: os.path.join(data_path, x),
-                       filter(lambda x: fnmatch.fnmatch(x, "*.dat"),
-                              os.listdir(data_path)))
-        print(filelist, file=sys.stderr)
-        if args.fnfilter is not None:
-            filelist = filter(lambda x: not fnmatch.fnmatch(x, args.fnfilter), filelist)
-            print(filelist, file=sys.stderr)
+        filelist = exp.result_file_list(args.subject, args.fnfilter)
         df = read_data(filelist)
-        flen = len(filelist)
         subject = args.subject
     else:
         df = read_data(args.data)
-        flen = len(args.data)
         subject = 'data'
 
     df['shift'] = df['phi'].combine(df['fg'], calc_angle_shift)
