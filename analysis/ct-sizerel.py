@@ -21,7 +21,7 @@ def read_data(file_list):
 def mean_angle(df, sign):
     x = df[df.fg == sign*22.5].append(df[df.fg == sign*67.5], ignore_index=True)
     grouped = x.groupby(['bg', 'size'])
-    df_mean = grouped['shift'].agg({'m_plus' if sign > 0 else 'm_minus': np.max})
+    df_mean = grouped['shift'].agg({'m_plus' if sign > 0 else 'm_minus': np.mean})
     return df_mean
 
 def main():
