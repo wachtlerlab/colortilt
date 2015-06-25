@@ -23,8 +23,9 @@ def show_x(a, *args, **kwargs):
     x_40 = a.loc[a['size'] == 40.0]['shift'].values[0]
     x_160 = a.loc[a['size'] == 160.0]['shift'].values[0]
     #print(x_40.values, x_40, file=sys.stderr)
-    return pd.Series({'40': x_40,
-                      'delta': x_10 - x_160})
+    sign = -1 if x_40 < 0 else 1
+    return pd.Series({'40': sign * x_40,
+                      'delta': sign * (x_10 - x_160)})
 
 def main():
     parser = argparse.ArgumentParser(description='CT - Analysis')
