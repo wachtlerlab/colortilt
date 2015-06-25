@@ -111,7 +111,8 @@ def main():
     parser.add_argument('--data', nargs='+', type=str)
     parser.add_argument('--exclude-files', dest='fnfilter', type=str)
     parser.add_argument('experiment', nargs='?', type=str, default=None)
-    parser.add_argument('subject', nargs='?', type=str, default=None)
+    parser.add_argument('subjects', nargs='+', type=str, default=None)
+    parser.add_argument('--combine', type=bool, default=False)
     args = parser.parse_args()
 
     args_ok = check_args(args)
@@ -121,7 +122,8 @@ def main():
 
     if args.experiment:
         exp = ColortiltExperiment.load_from_path(args.experiment)
-        df = exp.load_result_data(args.subject, args.fnfilter)
+        dfs = map(lambda subject: exp.load_result_data(subject, args.fnfilter), args.subjects)
+        df = pd.concat(dfs, ignore_index=True)
     else:
         df = read_data(args.data)
         df['subject'] = 'data'
@@ -129,11 +131,22 @@ def main():
     df['shift'] = df['phi'].combine(df['fg'], calc_angle_shift)
     df['fg_rel'] = df['fg'].combine(df['bg'], calc_angle_shift)
 
-    gpd = df[['bg', 'fg_rel', 'size', 'shift', 'subject']].groupby(['bg', 'size', 'fg_rel', 'subject'], as_index=False)
-    dfg = gpd.agg([np.mean, stdnerr, len])
+    if args.combine:
+        groups = ['bg', 'size', 'fg_rel']
+        columns = ['bg', 'size', 'fg', 'shift', 'err', 'N']
+    else:
+        groups = ['bg', 'size', 'fg_rel', 'subject']
+        columns = ['bg', 'size', 'fg', 'subject', 'shift', 'err', 'N']
 
+    gpd = df[['bg', 'fg_rel', 'size', 'shift', 'subject']].groupby(groups, as_index=False)
+    dfg = gpd.agg([np.mean, stdnerr, len])
     x = dfg.reset_index()
-    x.columns = ['bg', 'size', 'fg', 'subject', 'shift', 'err', 'N']
+    x.columns = columns
+
+    if args.combine:
+        subjects = '_'.join(map(lambda x: x[:2],  args.subjects))
+        x['subject'] = subjects
+
     x.to_csv(sys.stdout, index=False)
 
 if __name__ == "__main__":
