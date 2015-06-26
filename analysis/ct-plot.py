@@ -55,31 +55,35 @@ def plot_shifts(df):
 
     df = df.sort(['bg', 'size'])
     cm = plt.get_cmap('Paired')
+
     for idx, bg in enumerate(bgs):
         for si, s in enumerate(sizes):
             for cs, subject in enumerate(subjects):
                 plt.subplot(3, 3, pos_idx[bg])
                 try:
-                    #todo: better way to do the initial color selection
-                    rgb = cm((si*2)/(len(sizes)*3))
-                    hsv = rgb_to_hsv(rgb[:3])
-                    hsv[1] = cs/len(subjects)*0.5+0.3
+                    hsv = color_for_size(s, in_hsv=True)
+                    hsv[1] = (1.0-(cs/len(subjects)))*0.6+0.2
                     color = hsv_to_rgb(hsv)
                     arr = dfc_group.get_group((s, bg, subject))
                     plt.axhline(y=0, color='#777777')
                     plt.axvline(x=0, color='#777777')
-                    plt.errorbar(arr['fg'], arr['shift'], yerr=arr['err'], label=str(s), color=color)
+                    lbl = str(s) if len(subjects) == 1 else str(s) + ' ' + subject[:2]
+                    plt.errorbar(arr['fg'], arr['shift'], yerr=arr['err'], label=lbl, color=color)
                     plt.xlim([-180, 180])
                     plt.ylim([-1*max_shift, max_shift])
-                    if pos_idx[bg] == 6:
-                        plt.legend(loc=2)
+                    if pos_idx[bg] == 3:
+                        plt.legend(loc=2, fontsize=8)
                 except KeyError:
                     sys.stderr.write('[W] %.2f %.2f not present\n' % (s, bg))
 
         plt.xlabel(str(bg))
 
     if len(subjects) == 1:
-        plt.suptitle('%s' % (subjects[0]), fontsize=12)
+        title = subjects[0]
+    else:
+        title = ', '.join(map(lambda x: x[:2], subjects))
+
+    plt.suptitle(title, fontsize=12)
 
     return fig
 
