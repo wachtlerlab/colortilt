@@ -7,6 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import argparse
 import sys
+from matplotlib.colors import rgb_to_hsv, hsv_to_rgb
 
 plt.style.use('ggplot')
 
@@ -29,35 +30,41 @@ def make_idx2pos():
 
 
 def plot_shifts(df):
-    dfc_group = df.groupby(['size', 'bg'])
+    dfc_group = df.groupby(['size', 'bg', 'subject'])
 
     fig = plt.figure()
     bgs = df['bg'].unique()
-
+    subjects = df['subject'].unique()
+    sizes = df['size'].unique()
     pos_idx = make_idx2pos()
 
     max_shift = np.max(np.abs(df['shift'])) * 1.05
 
     df = df.sort(['bg', 'size'])
-
+    cm = plt.get_cmap('Paired')
     for idx, bg in enumerate(bgs):
-        for s in df['size'].unique():
-            plt.subplot(3, 3, pos_idx[bg])
-            try:
-                arr = dfc_group.get_group((s, bg))
-                plt.axhline(y=0, color='#777777')
-                plt.axvline(x=0, color='#777777')
-                plt.errorbar(arr['fg'], arr['shift'], yerr=arr['err'], label=str(s))
-                plt.xlim([-180, 180])
-                plt.ylim([-1*max_shift, max_shift])
-                if pos_idx[bg] == 6:
-                    plt.legend(loc=2)
-            except KeyError:
-                sys.stderr.write('[W] %.2f %.2f not present\n' % (s, bg))
+        for si, s in enumerate(sizes):
+            for cs, subject in enumerate(subjects):
+                plt.subplot(3, 3, pos_idx[bg])
+                try:
+                    #todo: better way to do the initial color selection
+                    rgb = cm((si*2)/(len(sizes)*3))
+                    hsv = rgb_to_hsv(rgb[:3])
+                    hsv[1] = cs/len(subjects)*0.5+0.3
+                    color = hsv_to_rgb(hsv)
+                    arr = dfc_group.get_group((s, bg, subject))
+                    plt.axhline(y=0, color='#777777')
+                    plt.axvline(x=0, color='#777777')
+                    plt.errorbar(arr['fg'], arr['shift'], yerr=arr['err'], label=str(s), color=color)
+                    plt.xlim([-180, 180])
+                    plt.ylim([-1*max_shift, max_shift])
+                    if pos_idx[bg] == 6:
+                        plt.legend(loc=2)
+                except KeyError:
+                    sys.stderr.write('[W] %.2f %.2f not present\n' % (s, bg))
 
         plt.xlabel(str(bg))
 
-    subjects = df['subject'].unique()
     if len(subjects) == 1:
         plt.suptitle('%s' % (subjects[0]), fontsize=12)
 
