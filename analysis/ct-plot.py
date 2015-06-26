@@ -88,11 +88,54 @@ def angles_to_color(angles):
 
 
 def plot_delta(df):
-    dfc_group = df.groupby('bg')
+    dfc_group = df.groupby(['bg', 'sign'])
 
     fig = plt.figure()
     bgs = sorted(df['bg'].unique())
+    signs = sorted(df['sign'].unique())
+    assert(len(signs) == 2 and all(map(lambda s: s in signs, [-1, 1])))
+    x_stop = df['40'].max() * 1.05
 
+    colors = angles_to_color(bgs)
+    fig.hold()
+    raw = True
+    slope = defaultdict(list)
+
+    markers = {-1: 's', 1: 'o'}
+    m_size = {-1: 35, 1: 40}
+
+    for si, sign in enumerate(signs):
+        for idx, bg in enumerate(bgs):
+            arr = dfc_group.get_group((bg, sign))
+            print(arr, file=sys.stderr)
+            x = arr['40'] if raw else np.abs(arr['40'])
+            y = arr['delta'] if raw else np.abs(arr['delta'])
+            p = np.polyfit(x, y, 1)
+            px = np.arange(-5, x_stop, 0.5)
+            py = np.polyval(p, px)
+            print(p, file=sys.stderr)
+            slope[sign].append(p[0])
+            plt.subplot(1, 2, 1)
+            plt.plot(px, py, color=colors[idx])
+            lbl = str(bg) + ' ' + ('+' if sign > 0 else '-')
+            plt.scatter(x, y, color=colors[idx], marker=markers[sign], label=lbl, s=m_size[sign])
+    plt.xlabel('40 degree')
+    plt.ylabel('10 - 160 degree')
+    plt.legend(loc=2)
+
+    plt.subplot(1, 2, 2, polar=True)
+    plt.hold()
+    print(slope, file=sys.stderr)
+    plt.scatter(map(lambda x: (x-10)/180.0*np.pi, bgs), np.abs(slope[-1]), c=colors, s=m_size[-1], marker=markers[-1])
+    plt.hold()
+    plt.scatter(map(lambda x: (x+10)/180.0*np.pi, bgs), np.abs(slope[+1]), c=colors, s=m_size[+1], marker=markers[+1])
+
+
+def plot_delta_combined(df):
+    dfc_group = df.groupby(['bg'])
+
+    fig = plt.figure()
+    bgs = sorted(df['bg'].unique())
     x_stop = df['40'].max() * 1.05
 
     colors = angles_to_color(bgs)
@@ -106,13 +149,14 @@ def plot_delta(df):
         x = arr['40'] if raw else np.abs(arr['40'])
         y = arr['delta'] if raw else np.abs(arr['delta'])
         p = np.polyfit(x, y, 1)
-        px = np.arange(0, x_stop, 0.5)
+        px = np.arange(-5, x_stop, 0.5)
         py = np.polyval(p, px)
-        print(p, file=sys.stderr)
         slope.append(p[0])
         plt.subplot(1, 2, 1)
-        plt.plot(px, py, color=colors[idx], label=str(bg))
-        plt.scatter(x, y, color=colors[idx])
+        plt.plot(px, py, color=colors[idx])
+        lbl = str(bg)
+        plt.scatter(x, y, color=colors[idx], marker='o', label=lbl, s=40)
+
     plt.xlabel('40 degree')
     plt.ylabel('10 - 160 degree')
     plt.legend(loc=2)
@@ -120,7 +164,7 @@ def plot_delta(df):
     plt.subplot(1, 2, 2, polar=True)
     plt.hold()
     print(slope, file=sys.stderr)
-    plt.scatter(map(lambda x: x/180.0*np.pi, bgs), slope, c=colors, s=40)
+    plt.scatter(map(lambda x: x/180.0*np.pi, bgs), np.abs(slope), c=colors, s=40, marker='o')
 
 
 
@@ -197,7 +241,7 @@ def main():
     elif 'ratio' in df.columns:
         plot_ratio(df)
     elif 'delta' in df.columns:
-        plot_delta(df)
+        plot_delta_combined(df)
     elif 'm_plus' in df.columns:
         plot_sizerel(df)
     else:
