@@ -210,22 +210,26 @@ def plot_sizerel(df):
     colors = angles_to_color(bgs)
     fig.hold()
 
+    y_max = np.max([df['m_plus'].max(), np.abs(df['m_minus'].min())]) * 1.05
+
     for idx, bg in enumerate(bgs):
         arr = dfc_group.get_group(bg)
-        print(arr, file=sys.stderr)
         plt.subplot(1, 2, 1)
-        plt.plot(np.log2(arr['size']), arr['m_plus'], color=colors[idx])
-        plt.scatter(np.log2(arr['size']), arr['m_plus'], color=colors[idx], marker='.', s=80, label='%s +' % str(bg))
+        x = np.log2(arr['size'])
+        plt.plot(x, arr['m_plus'], color=colors[idx])
+        plt.scatter(x, arr['m_plus'], color=colors[idx], marker='.', s=80, label='%s +' % str(bg))
         plt.subplot(1, 2, 2)
-        plt.plot(np.log2(arr['size']), -1*arr['m_minus'], color=colors[idx])
-        plt.scatter(np.log2(arr['size']), -1*arr['m_minus'], color=colors[idx], marker="1", s=80, label='%s -' % str(bg))
+        plt.plot(x, -1*arr['m_minus'], color=colors[idx])
+        plt.scatter(x, -1*arr['m_minus'], color=colors[idx], marker="1", s=80, label='%s -' % str(bg))
     plt.subplot(1, 2, 1)
     plt.xlabel('size')
     plt.ylabel('induction')
+    plt.ylim([0, y_max])
     plt.legend()
     plt.subplot(1, 2, 2)
     plt.xlabel('size')
     plt.ylabel('induction')
+    plt.ylim([0, y_max])
     plt.legend()
 
 def main():
