@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from __future__ import print_function
 from __future__ import division
+from collections import defaultdict
 
 import pandas as pd
 import numpy as np
@@ -27,6 +28,18 @@ def make_idx2pos():
     pos_map = {-1: (1, 1), 0: (1, 2), 45: (0, 2), 90: (0, 1), 135: (0, 0), 180: (1, 0), 225: (2, 0), 270: (2, 1), 315: (2, 2)}
     pos_idx = {k: pos_map[k][0]*3+pos_map[k][1]+1 for k in pos_map}
     return pos_idx
+
+def color_for_size(size, in_hsv=False):
+    cs_map = {
+        '10':  [0.4910111613133375, 0.77181085558498608, 0.38794311670696036, 1.0],
+        '40': [0.65098041296005249, 0.80784314870834351, 0.89019608497619629, 1.0],
+        '160':  [0.9020069262560676, 0.1649519457244405, 0.17131872735187115, 1.0]
+    }
+
+    c = cs_map[str(size)]
+    if in_hsv:
+        c = rgb_to_hsv(c[:3])
+    return c
 
 
 def plot_shifts(df):
