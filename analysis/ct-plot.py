@@ -74,7 +74,7 @@ def plot_shifts(df):
                     if pos_idx[bg] == 3:
                         plt.legend(loc=2, fontsize=8)
                 except KeyError:
-                    sys.stderr.write('[W] %.2f %.2f not present\n' % (s, bg))
+                    sys.stderr.write('[W] %s %.2f %.2f not present\n' % (subject, s, bg))
 
         plt.xlabel(str(bg))
 
