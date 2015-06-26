@@ -108,7 +108,7 @@ def main():
     parser.add_argument('--data', nargs='+', type=str)
     parser.add_argument('--exclude-files', dest='fnfilter', type=str)
     parser.add_argument('experiment', nargs='?', type=str, default=None)
-    parser.add_argument('subjects', nargs='+', type=str, default=None)
+    parser.add_argument('subjects', nargs='*', type=str, default=None)
     parser.add_argument('--combine', type=bool, default=False)
     args = parser.parse_args()
 
