@@ -178,11 +178,11 @@ def plot_delta_combined(df):
     plt.ylabel('10 - 160 degree')
     plt.legend(loc=2)
 
-    plt.subplot(1, 2, 2, polar=True)
+    ax = plt.subplot(1, 2, 2, polar=True)
     plt.hold()
     print(slope, file=sys.stderr)
     plt.scatter(map(lambda x: x/180.0*np.pi, bgs), np.abs(slope), c=colors, s=40, marker='o')
-
+    ax.set_rmax(np.max(np.abs(slope))*1.05)
 
 
 def plot_ratio(df):
