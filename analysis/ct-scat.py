@@ -17,15 +17,16 @@ def read_data(file_list):
             df = df.append(to_append, ignore_index=True)
     return df
 
-def show_x(a, *args, **kwargs):
-    #print(a, args, kwargs, file=sys.stderr)
+def calc_delta(a):
     x_10 = a.loc[a['size'] == 10.0]['shift'].values[0]
     x_40 = a.loc[a['size'] == 40.0]['shift'].values[0]
     x_160 = a.loc[a['size'] == 160.0]['shift'].values[0]
-    #print(x_40.values, x_40, file=sys.stderr)
-    sign = -1 if x_40 < 0 else 1
+    fg = a['fg'].unique()
+    assert(len(fg) == 1)
+    sign = -1 if fg < 0 else 1
     return pd.Series({'40': sign * x_40,
-                      'delta': sign * (x_10 - x_160)})
+                      'delta': sign * (x_10 - x_160),
+                      'sign': sign})
 
 def main():
     parser = argparse.ArgumentParser(description='CT - Analysis')
@@ -35,7 +36,7 @@ def main():
     df = read_data(args.data)
     df = df[df.bg != -1]
     dfg = df.groupby(['bg', 'fg'])
-    x = dfg.apply(show_x)
+    x = dfg.apply(calc_delta)
     x = x.reset_index()
     x.to_csv(sys.stdout, index=False)
 
