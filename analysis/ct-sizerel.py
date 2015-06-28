@@ -30,6 +30,7 @@ def mean_angle(df, sign, use_mean=False):
     df_mean = grouped['shift'].agg({'m_plus' if sign > 0 else 'm_minus': fn})
     return df_mean
 
+
 def main():
     parser = argparse.ArgumentParser(description='CT - Analysis')
     parser.add_argument('data', nargs='+', type=str, default=['-'])
@@ -45,6 +46,10 @@ def main():
 
     x = pd.concat([m_plus, m_minus], axis=1)
     x = x.reset_index()
+
+    abs_mean = lambda x, y: np.mean([np.abs(x), np.abs(y)])
+    x['m_mean'] = x['m_plus'].combine(x['m_minus'], abs_mean)
+
     x.to_csv(sys.stdout, index=False)
 
 if __name__ == "__main__":
