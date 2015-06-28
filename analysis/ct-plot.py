@@ -11,8 +11,6 @@ import argparse
 import sys
 from matplotlib.colors import rgb_to_hsv, hsv_to_rgb
 
-plt.style.use('ggplot')
-
 def read_data(file_list):
     if len(file_list) == 1 and file_list[0] == '-':
         file_list[0] = sys.stdin
@@ -253,10 +251,13 @@ def plot_sizerel(df):
 def main():
     parser = argparse.ArgumentParser(description='CT - Analysis')
     parser.add_argument('data', type=str, nargs='+', default='-')
+    parser.add_argument('--style', nargs='*', type=str, default=['ck'])
     args = parser.parse_args()
 
     df = read_data(args.data)
     print(df, file=sys.stderr)
+
+    plt.style.use(args.style)
 
     if 'shift' in df.columns:
         plot_shifts(df)
