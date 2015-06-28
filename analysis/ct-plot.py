@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import argparse
 import sys
 from matplotlib.colors import rgb_to_hsv, hsv_to_rgb
+from utils import ggsave
 
 def read_data(file_list):
     if len(file_list) == 1 and file_list[0] == '-':
@@ -40,51 +41,71 @@ def color_for_size(size, in_hsv=False):
         c = rgb_to_hsv(c[:3])
     return c
 
+def get_figure(figures, cargs):
+    if cargs.single or len(figures) == 0:
+        fig = plt.figure()
+        figures.append(fig)
+    else:
+        fig = figures[0]
+    return fig
 
-def plot_shifts(df):
+def make_subject_string(subjects):
+    if len(subjects) == 1:
+        title = subjects[0]
+    else:
+        title = '+'.join(map(lambda x: x[:2], subjects))
+    return title
+
+def plot_shifts(df, cargs):
     dfc_group = df.groupby(['size', 'bg', 'subject'])
 
-    fig = plt.figure()
     bgs = df['bg'].unique()
     subjects = df['subject'].unique()
     sizes = df['size'].unique()
     pos_idx = make_idx2pos()
 
     max_shift = np.max(np.abs(df['shift'])) * 1.05
+    subject_str = make_subject_string(subjects)
+    figures = []
 
-    df = df.sort(['bg', 'size'])
-    cm = plt.get_cmap('Paired')
+    if not cargs.single:
+        fig = get_figure(figures, cargs)
+        if not cargs.no_title:
+            plt.suptitle(subject_str, fontsize=12)
 
     for idx, bg in enumerate(bgs):
+        fig = get_figure(figures, cargs)
+        if cargs.single:
+            ax = plt.subplot(1, 1, 1)
+            if not cargs.no_title:
+                plt.suptitle(subject_str + " " + str(bg))
+            setattr(fig, 'name', subject_str + " " + str(bg))
+        else:
+            ax = plt.subplot(3, 3, pos_idx[bg])
         for si, s in enumerate(sizes):
             for cs, subject in enumerate(subjects):
-                plt.subplot(3, 3, pos_idx[bg])
                 try:
-                    hsv = color_for_size(s, in_hsv=True)
-                    hsv[1] = (1.0-(cs/len(subjects)))*0.6+0.2
-                    color = hsv_to_rgb(hsv)
                     arr = dfc_group.get_group((s, bg, subject))
-                    plt.axhline(y=0, color='#777777')
-                    plt.axvline(x=0, color='#777777')
-                    lbl = str(s) if len(subjects) == 1 else str(s) + ' ' + subject[:2]
-                    plt.errorbar(arr['fg'], arr['shift'], yerr=arr['err'], label=lbl, color=color)
-                    plt.xlim([-180, 180])
-                    plt.ylim([-1*max_shift, max_shift])
-                    if pos_idx[bg] == 3:
-                        plt.legend(loc=2, fontsize=8)
                 except KeyError:
                     sys.stderr.write('[W] %s %.2f %.2f not present\n' % (subject, s, bg))
 
-        plt.xlabel(str(bg))
+                hsv = color_for_size(s, in_hsv=True)
+                hsv[1] = (1.0-(cs/len(subjects)))*0.6+0.2
+                color = hsv_to_rgb(hsv)
 
-    if len(subjects) == 1:
-        title = subjects[0]
-    else:
-        title = ', '.join(map(lambda x: x[:2], subjects))
+                plt.axhline(y=0, color='#777777')
+                plt.axvline(x=0, color='#777777')
+                lbl = str(s) if len(subjects) == 1 else str(s) + ' ' + subject[:2]
+                plt.errorbar(arr['fg'], arr['shift'], yerr=arr['err'], label=lbl, color=color)
+                plt.xlim([-180, 180])
+                plt.ylim([-1*max_shift, max_shift])
+                if pos_idx[bg] == 3:
+                    plt.legend(loc=4, fontsize=8)
+                ax.annotate(u"%4d°" % int(bg), xy=(.05, .95),  xycoords='axes fraction',
+                            horizontalalignment='left', verticalalignment='top',
+                            fontsize=18, family='monospace', color=angles_to_color([bg])[0])
 
-    plt.suptitle(title, fontsize=12)
-
-    return fig
+    return figures
 
 
 def angles_to_color(angles):
@@ -92,6 +113,7 @@ def angles_to_color(angles):
         return "#%02x%02x%02x" % (r, g, b)
 
     bg = list(np.arange(0, 360, 360.0/8))
+
     cls = [rgb(252, 38, 28),
            rgb(253, 77, 252),
            rgb(13, 66, 251),
@@ -99,11 +121,13 @@ def angles_to_color(angles):
            rgb(26, 176, 29),
            rgb(181, 248, 50),
            rgb(216, 202, 43),
-           rgb(252, 151, 39)]
-    return [cls[bg.index(a)] for a in angles]
+           rgb(252, 151, 39),
+           rgb(0, 0, 0)  #fallback color
+           ]
+    return [cls[bg.index(a) if a in bg else 8] for a in angles]
 
 
-def plot_delta(df):
+def plot_delta(df, cargs):
     dfc_group = df.groupby(['bg', 'sign'])
 
     fig = plt.figure()
@@ -145,9 +169,9 @@ def plot_delta(df):
     plt.scatter(map(lambda x: (x-10)/180.0*np.pi, bgs), np.abs(slope[-1]), c=colors, s=m_size[-1], marker=markers[-1])
     plt.hold()
     plt.scatter(map(lambda x: (x+10)/180.0*np.pi, bgs), np.abs(slope[+1]), c=colors, s=m_size[+1], marker=markers[+1])
+    return [fig]
 
-
-def plot_delta_combined(df):
+def plot_delta_combined(df, cargs):
     dfc_group = df.groupby(['bg'])
 
     fig = plt.figure()
@@ -173,18 +197,20 @@ def plot_delta_combined(df):
         lbl = str(bg)
         plt.scatter(x, y, color=colors[idx], marker='o', label=lbl, s=40)
 
-    plt.xlabel('40 degree')
-    plt.ylabel('10 - 160 degree')
-    plt.legend(loc=2)
+    plt.xlabel(u'40°')
+    plt.ylabel(u'10° - 160°')
+    plt.xlim([np.min(px), np.max(px)])
+    #plt.legend(loc=2)
 
     ax = plt.subplot(1, 2, 2, polar=True)
     plt.hold()
-    print(slope, file=sys.stderr)
     plt.scatter(map(lambda x: x/180.0*np.pi, bgs), np.abs(slope), c=colors, s=40, marker='o')
     ax.set_rmax(np.max(np.abs(slope))*1.05)
 
+    setattr(fig, 'name', 'scat')
+    return [fig]
 
-def plot_ratio(df):
+def plot_ratio(df, cargs):
     fig = plt.figure()
 
     dfc_group = df.groupby(['subject', 'bg'])
@@ -203,7 +229,6 @@ def plot_ratio(df):
                 plt.axvline(x=0, color='#777777')
                 plt.plot(arr['fg'], arr['ratio'], label=str(s))
                 plt.xlim([-180, 180])
-                #plt.ylim([-1*max_ratio, max_ratio])
                 if pos_idx[bg] == 6:
                     plt.legend(loc=2)
             except KeyError:
@@ -215,9 +240,9 @@ def plot_ratio(df):
     if len(subjects) == 1:
         plt.suptitle('%s' % (subjects[0]), fontsize=12)
 
-    return fig
+    return [fig]
 
-def plot_sizerel(df):
+def plot_sizerel(df, cargs):
     dfc_group = df.groupby('bg')
 
     fig = plt.figure()
@@ -247,11 +272,51 @@ def plot_sizerel(df):
     plt.ylabel('induction')
     plt.ylim([0, y_max])
     plt.legend()
+    setattr(fig, 'name', 'sizerel')
+    return [fig]
+
+def plot_sizerel_combined(df, cargs):
+    dfc_group = df.groupby('bg')
+
+    fig = plt.figure()
+    bgs = sorted(df['bg'].unique())
+
+    colors = angles_to_color(bgs)
+    fig.hold()
+
+    y_max = np.max(np.abs(df['m_mean'])) * 1.05
+    y_min = np.min(np.abs(df['m_mean'])) * 0.95
+
+    for idx, bg in enumerate(bgs):
+        arr = dfc_group.get_group(bg)
+        x = 2*np.arctan2(arr['size'], 2.0*1145.0)/np.pi*180.0
+        x = np.log2(x)
+        plt.plot(x, arr['m_mean'], color=colors[idx])
+        plt.scatter(x, arr['m_mean'], color=colors[idx], marker='.', s=140, label=u'%03s°' % str(int(bg)))
+        plt.xlabel('size')
+
+    labels = [u'0.5°', u'2°', u'8°']
+    plt.xticks(x, labels)
+    plt.ylabel('induction')
+    plt.ylim([y_min, y_max])
+    plt.legend()
+
+    setattr(fig, 'name', 'sizerel')
+
+    return [fig]
+
 
 def main():
     parser = argparse.ArgumentParser(description='CT - Analysis')
     parser.add_argument('data', type=str, nargs='+', default='-')
+    parser.add_argument('--single', action='store_true', default=False)
     parser.add_argument('--style', nargs='*', type=str, default=['ck'])
+    parser.add_argument('--save', default=False, action='store_true')
+    parser.add_argument('--legend', dest='legend', action='store_true', default=False)
+    parser.add_argument('--no-title', dest='no_title', action='store_true', default=False)
+    parser.add_argument('-H, --height', dest='height', type=float, default=13.7)
+    parser.add_argument('-W, --width', dest='width', type=float, default=24.7)
+    parser.add_argument('-U, --unit', dest='unit', type=str, default='cm')
     args = parser.parse_args()
 
     df = read_data(args.data)
@@ -260,17 +325,21 @@ def main():
     plt.style.use(args.style)
 
     if 'shift' in df.columns:
-        plot_shifts(df)
+        fig = plot_shifts(df, args)
     elif 'ratio' in df.columns:
-        plot_ratio(df)
+        fig = plot_ratio(df, args)
     elif 'delta' in df.columns:
-        plot_delta_combined(df)
+        fig = plot_delta_combined(df, args)
     elif 'm_plus' in df.columns:
-        plot_sizerel(df)
+        fig = plot_sizerel_combined(df, args)
     else:
         raise ValueError('Unknown data set')
 
-    plt.show()
+    if args.save:
+        for f in fig:
+            ggsave(plot=f, width=args.width, height=args.height, units=args.unit)
+    else:
+        plt.show()
 
 if __name__ == '__main__':
     main()
