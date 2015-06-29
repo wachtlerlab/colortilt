@@ -88,7 +88,7 @@ def plot_shifts(df, cargs):
 
     bgs = df['bg'].unique()
     subjects = df['subject'].unique()
-    sizes = df['size'].unique()
+    sizes = sorted(df['size'].unique())
     pos_idx = make_idx2pos()
 
     max_shift = np.max(np.abs(df['shift'])) * 1.05
