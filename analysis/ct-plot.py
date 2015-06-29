@@ -210,6 +210,10 @@ def plot_delta_combined(df, cargs):
     raw = True
     slope = []
 
+    figures = []
+    fig = get_figure(figures, cargs)
+    setattr(fig, 'name', 'scat')
+
     for idx, bg in enumerate(bgs):
         arr = dfc_group.get_group(bg)
         print(arr, file=sys.stderr)
@@ -219,7 +223,8 @@ def plot_delta_combined(df, cargs):
         px = np.arange(-5, x_stop, 0.5)
         py = np.polyval(p, px)
         slope.append(p[0])
-        plt.subplot(1, 2, 1)
+        if not cargs.single:
+            plt.subplot(1, 2, 1)
         plt.plot(px, py, color=colors[idx])
         lbl = str(bg)
         plt.scatter(x, y, color=colors[idx], marker='o', label=lbl, s=40)
@@ -229,13 +234,17 @@ def plot_delta_combined(df, cargs):
     plt.xlim([np.min(px), np.max(px)])
     #plt.legend(loc=2)
 
-    ax = plt.subplot(1, 2, 2, polar=True)
+    if not cargs.single:
+        ax = plt.subplot(1, 2, 2, polar=True)
+    else:
+        fig = get_figure(figures, cargs)
+        setattr(fig, 'name', 'scat-polar')
+        ax = plt.subplot(1, 1, 1, polar=True)
     plt.hold()
     plt.scatter(map(lambda x: x/180.0*np.pi, bgs), np.abs(slope), c=colors, s=40, marker='o')
     ax.set_rmax(np.max(np.abs(slope))*1.05)
 
-    setattr(fig, 'name', 'scat')
-    return [fig]
+    return figures
 
 def plot_ratio(df, cargs):
     fig = plt.figure()
