@@ -56,6 +56,33 @@ def make_subject_string(subjects):
         title = '+'.join(map(lambda x: x[:2], subjects))
     return title
 
+
+def style_for_size_and_subject(size, subject, n_subjects, cargs):
+    if not cargs.gray:
+        hsv = color_for_size(size, in_hsv=True)
+        hsv[1] = (1.0-(subject/n_subjects))*0.6+0.2
+        color = hsv_to_rgb(hsv)
+        return {'color': color}
+    else:
+        cs_map = {
+            '10':  [0.60, 0.60, 0.60, 1.0],
+            '40': [0.35, 0.35, 0.35, 1.0],
+            '160':  [0.0, 0.0, 0.0, 1.0]
+        }
+        c = cs_map[str(size)]
+        line_styles = ['-', '--', ':']
+        if n_subjects > len(line_styles):
+            raise ValueError('More subjects then available line styles')
+        return {'color': c, 'linestyle': line_styles[subject], 'linewidth': 1.5}
+
+def size_to_label(size):
+    size_map = {
+        '10': u'0.5°',
+        '40': u'  2°',
+        '160': u'  8°'
+    }
+    return size_map[str(size)]
+
 def plot_shifts(df, cargs):
     dfc_group = df.groupby(['size', 'bg', 'subject'])
 
@@ -89,21 +116,21 @@ def plot_shifts(df, cargs):
                 except KeyError:
                     sys.stderr.write('[W] %s %.2f %.2f not present\n' % (subject, s, bg))
 
-                hsv = color_for_size(s, in_hsv=True)
-                hsv[1] = (1.0-(cs/len(subjects)))*0.6+0.2
-                color = hsv_to_rgb(hsv)
+                plot_style = style_for_size_and_subject(s, cs, len(subjects), cargs)
 
                 plt.axhline(y=0, color='#777777')
                 plt.axvline(x=0, color='#777777')
-                lbl = str(s) if len(subjects) == 1 else str(s) + ' ' + subject[:2]
-                plt.errorbar(arr['fg'], arr['shift'], yerr=arr['err'], label=lbl, color=color)
+                sstr = size_to_label(s)
+                lbl = sstr if len(subjects) == 1 else sstr + ' ' + subject[:2]
+                plt.errorbar(arr['fg'], arr['shift'], yerr=arr['err'], label=lbl, **plot_style)
                 plt.xlim([-180, 180])
                 plt.ylim([-1*max_shift, max_shift])
-                if pos_idx[bg] == 3:
-                    plt.legend(loc=4, fontsize=8)
+                if pos_idx[bg] == 6:
+                    plt.legend(loc=4, fontsize=12)
+
                 ax.annotate(u"%4d°" % int(bg), xy=(.05, .95),  xycoords='axes fraction',
                             horizontalalignment='left', verticalalignment='top',
-                            fontsize=18, family='monospace', color=angles_to_color([bg])[0])
+                            fontsize=18, family='Input Mono', color=angles_to_color([bg])[0])
 
     return figures
 
@@ -311,6 +338,7 @@ def main():
     parser.add_argument('data', type=str, nargs='+', default='-')
     parser.add_argument('--single', action='store_true', default=False)
     parser.add_argument('--style', nargs='*', type=str, default=['ck'])
+    parser.add_argument('--gray', default=False, action='store_true')
     parser.add_argument('--save', default=False, action='store_true')
     parser.add_argument('--legend', dest='legend', action='store_true', default=False)
     parser.add_argument('--no-title', dest='no_title', action='store_true', default=False)
