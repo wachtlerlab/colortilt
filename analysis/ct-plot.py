@@ -329,11 +329,11 @@ def plot_sizerel_combined(df, cargs):
         x = np.log2(x)
         plt.plot(x, arr['m_mean'], color=colors[idx])
         plt.scatter(x, arr['m_mean'], color=colors[idx], marker='.', s=140, label=u'%03s°' % str(int(bg)))
-        plt.xlabel('size')
+        plt.xlabel('stimulus size [deg]')
 
     labels = [u'0.5°', u'2°', u'8°']
     plt.xticks(x, labels)
-    plt.ylabel('induction')
+    plt.ylabel('induced hue shift [deg]')
     plt.ylim([y_min, y_max])
     plt.legend()
 
