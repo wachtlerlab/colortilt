@@ -6,6 +6,8 @@
 int main(int argc, char **argv) {
 
     try {
+        iris::data::store store = iris::data::store::default_store();
+
         // load the experiment data
         fs::file exp_file = colortilt::experiment::find_file("");
         if (exp_file.path().empty()) {
@@ -29,11 +31,32 @@ int main(int argc, char **argv) {
 
         std::vector<std::string> sids = exp.subjects();
 
+
+        std::vector<iris::data::subject> subjects;
         std::cout << std::endl << "Enrolled subjects: " << std::endl;
         for (const std::string &sid : sids) {
-            std::cout << "  " << sid << std::endl;
+            std::cout << "  " << sid;
+            iris::data::subject s;
+            try {
+                s = store.load_subject(sid);
+                subjects.push_back(std::move(s));
+            } catch (const std::exception &e) {
+                std::cout << "\t[! unregisted subject]";
+            }
+
+            std::cout << std::endl;
         }
 
+        std::cout << std::endl << "Sessions: " << std::endl;
+        for (const iris::data::subject &subject : subjects) {
+            std::vector<colortilt::session> sessions = exp.load_sessions(subject);
+
+            std::cout << "  " << subject.name << std::endl;
+            for (const colortilt::session &s : sessions) {
+                std::cout << "    " << s.name() << std::endl;
+            }
+
+        }
 
 
     } catch (const std::exception &e) {
