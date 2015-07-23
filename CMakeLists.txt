@@ -64,7 +64,7 @@ if(NOT APPLE)
 endif()
 
 #########################################
-set(experiment_SOURCES stimulus.h scene.h scene.cc main.cc stimulus.cc)
+set(experiment_SOURCES stimulus.h scene.h scene.cc main.cc stimulus.cc exp.h exp.cc)
 add_executable(pp-ct ${experiment_SOURCES})
 target_link_libraries(pp-ct ${LINK_LIBS})
 
