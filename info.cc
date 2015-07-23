@@ -27,7 +27,13 @@ int main(int argc, char **argv) {
         std::cout << "Contrast FG: " << exp.c_fg << std::endl;
         std::cout << "Mouse gain:  " << exp.cursor_gain << std::endl;
 
-        
+        std::vector<std::string> sids = exp.subjects();
+
+        std::cout << std::endl << "Enrolled subjects: " << std::endl;
+        for (const std::string &sid : sids) {
+            std::cout << "  " << sid << std::endl;
+        }
+
 
 
     } catch (const std::exception &e) {
