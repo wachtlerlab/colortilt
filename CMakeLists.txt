@@ -76,9 +76,13 @@ set(rndgen_SOURCES rndgen.cc)
 add_executable(pp-ct-rndgen ${rndgen_SOURCES})
 target_link_libraries(pp-ct-rndgen ${LINK_LIBS})
 
+set(info_SOURCES info.cc exp.cc)
+add_executable(pp-ct-info ${info_SOURCES})
+target_link_libraries(pp-ct-info ${LINK_LIBS})
+
 #########################################
 # installation
 
-install(TARGETS pp-ct-rndgen pp-ct-stimgen pp-ct
+install(TARGETS pp-ct-rndgen pp-ct-stimgen pp-ct-info pp-ct
         RUNTIME DESTINATION bin
         COMPONENT applications)
