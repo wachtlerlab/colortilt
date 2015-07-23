@@ -33,6 +33,29 @@ experiment experiment::from_yaml(const fs::file &path) {
     return exp;
 }
 
+
+fs::file experiment::find_file(const std::string &additional_path) {
+
+    std::vector<fs::file> known_files = {
+            fs::file(additional_path),
+            fs::file("colortilt.experiment"),
+            fs::file("~/colortilt.experiment"),
+            fs::file("~/experiments/colortilt.experiment"),
+            fs::file("~/experiments/colortilt/experiment")
+    };
+
+    std::cerr << "[D] Looking for exp file in: " << std::endl;
+    for (fs::file &f : known_files) {
+        std::cerr << f.path() << std::endl;
+        if (f.exists()) {
+            return f;
+        }
+    }
+
+    return fs::file();
+}
+
+
 fs::file experiment::make_file(const std::string &path) const {
     if (path.empty()) {
         return fs::file();
@@ -168,4 +191,5 @@ session experiment::next_session(const iris::data::subject &sub) const {
 
     return colortilt::session();
 }
+
 }

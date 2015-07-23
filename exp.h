@@ -52,6 +52,7 @@ struct experiment {
     std::string sess_path;
 
     static experiment from_yaml(const fs::file &path);
+    static fs::file find_file(const std::string &additional_path);
 
     fs::file data_dir() const;
     fs::file stim_dir() const;
