@@ -64,8 +64,12 @@ struct experiment {
     fs::file rnd_file(const session &s) const;
     fs::file resp_file(const session &ses, const iris::data::subject &sub, const std::string &prefix = "") const;
 
+    std::vector<std::string> subjects() const;
+
     std::vector<session> load_sessions(const iris::data::subject &sub) const;
     session next_session(const iris::data::subject &sub) const;
+
+
 
     //utility
     fs::file make_file(const std::string &path) const;

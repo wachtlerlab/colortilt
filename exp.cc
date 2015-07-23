@@ -112,6 +112,24 @@ fs::file experiment::resp_file(const session &ses, const iris::data::subject &su
     return resp_file;
 }
 
+
+std::vector<std::string> experiment::subjects() const {
+    fs::file base = sess_dir();
+
+    std::vector<fs::file> res;
+    std::copy_if(base.children().begin(), base.children().end(),
+                 std::back_inserter(res), fs::fn_matcher("*.sessions"));
+
+    std::vector<std::string> subjects;
+    std::transform(res.begin(), res.end(), std::back_inserter(subjects), [](const fs::file &f){
+        std::string name, ext;
+        std::tie(name, ext) = f.splitext();
+        return name;
+    });
+
+    return subjects;
+}
+
 std::vector<session> experiment::load_sessions(const iris::data::subject &sub) const {
     fs::file session_fn = session_file(sub);
 
