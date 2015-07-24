@@ -42,6 +42,18 @@ struct session {
     }
 };
 
+struct trail {
+
+    std::string stim;
+    std::string rnd;
+
+    std::string name() const {
+        return stim + "@" + rnd;
+    }
+
+    static trail from_string(const std::string &str);
+};
+
 struct experiment {
     double c_fg;
     double c_bg;
@@ -67,6 +79,8 @@ struct experiment {
     std::vector<std::string> subjects() const;
 
     std::vector<session> load_sessions(const iris::data::subject &sub) const;
+    std::vector<trail> list_trails(const iris::data::subject &sub) const;
+
     session next_session(const iris::data::subject &sub) const;
 
 

@@ -16,6 +16,22 @@ session session::from_string(const std::string &str) {
     return s;
 }
 
+
+trail trail::from_string(const std::string &str) {
+
+    trail t;
+    size_t pos = str.find("@");
+    if (pos != std::string::npos) {
+        t.stim = str.substr(0, pos);
+        t.rnd = str.substr(pos+1);
+    } else {
+        t.stim = str;
+        t.rnd = "";
+    }
+
+    return t;
+}
+
 experiment experiment::from_yaml(const fs::file &path) {
     std::string data = path.read_all();
     YAML::Node doc = YAML::Load(data);
@@ -152,6 +168,30 @@ std::vector<session> experiment::load_sessions(const iris::data::subject &sub) c
     return sessions;
 }
 
+
+std::vector<trail> experiment::list_trails(const iris::data::subject &sub) const {
+    std::string timebase = iris::make_timestamp();
+    const size_t ts_size = timebase.size();
+
+    fs::file target = resp_dir(sub);
+
+    std::vector<fs::file> dat_files;
+    std::copy_if(target.children().begin(), target.children().end(),
+                 std::back_inserter(dat_files), fs::fn_matcher("*.dat"));
+
+    std::vector<colortilt::trail> trails;
+    std::transform(dat_files.begin(), dat_files.end(),
+                   std::back_inserter(trails),
+                   [ts_size](const fs::file &f) {
+                       std::string name = f.name();
+                       size_t name_len = name.size();
+                       name_len -= (ts_size + 5);
+                       std::string nid =  name.substr(ts_size + 1, name_len);
+                       return colortilt::trail::from_string(nid);
+                   });
+
+    return trails;
+}
 
 session experiment::next_session(const iris::data::subject &sub) const {
     std::string timebase = iris::make_timestamp();
