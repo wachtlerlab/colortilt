@@ -82,7 +82,7 @@ def show_summary(stats, df):
                     print('    %s %s %1.2f %1.2f' % (om[bg], om[fg], np.median(data), np.mean(data)))
 
 
-def show_detail(df, stats=None):
+def show_detail(df, stats=None, missing_only=True):
     dfg = df.groupby(['subject', 'size', 'bg', 'fg'])
 
     for k, v in sorted(dfg.groups.iteritems()):
@@ -102,10 +102,13 @@ def show_detail(df, stats=None):
         if stats is not None:
             data = stats[bg_b][fg_b][sz][sb]
             m = np.median(data)
-            if N < m:
+            missing = N < m
+            if missing:
                 indicator = ' ! '
+            elif missing_only:
+                continue
 
-        s = u"%s  %3d %8.2f %s %8.2f %d [%2.1f] %s\n" % (sb, sz, bg, om[bg_b], fg, N, m, indicator)
+        s = u"%10s  %3d %8.2f %s %8.2f %d [%2.1f] %s\n" % (sb, sz, bg, om[bg_b], fg, N, m, indicator)
         sys.stdout.write(s.encode('utf-8'))
 
 
@@ -114,6 +117,7 @@ def main():
     parser = argparse.ArgumentParser(description='CT - Analysis')
     parser.add_argument('data', nargs='+', type=str, default=['-'])
     parser.add_argument('--debug', action="store_true", default=False)
+    parser.add_argument('--full', action="store_true", default=False)
     args = parser.parse_args()
 
     do_debug = args.debug
@@ -123,7 +127,7 @@ def main():
 
     stats = make_stats(df)
 
-    show_detail(df, stats=stats)
+    show_detail(df, stats=stats, missing_only=not args.full)
     show_summary(stats, df)
 
 if __name__ == "__main__":
