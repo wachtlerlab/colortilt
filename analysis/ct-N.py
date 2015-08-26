@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# coding=utf-8
 from __future__ import print_function
 from __future__ import division
 
@@ -45,26 +46,15 @@ def debug(*args, **kwargs):
         print(*args, **kwargs)
 
 
-def main():
-    global do_debug
-    parser = argparse.ArgumentParser(description='CT - Analysis')
-    parser.add_argument('data', nargs='+', type=str, default=['-'])
-    parser.add_argument('--debug', action="store_true", default=False)
-    args = parser.parse_args()
-
-    do_debug = args.debug
-
-    df = read_data(args.data)
-    df = df[df.bg != -1]
-    dfg = df.groupby(['bg', 'fg', 'size', 'subject'])
-
+def make_stats(df):
+    dfg = df.groupby(['subject', 'size', 'bg', 'fg'])
     stats = NestedDefaultDict(4, list)
     debug(dfg.groups, file)
     for k, v in dfg.groups.iteritems():
-        bg = on_or_off(k[0])
-        fg = on_or_off(k[1])
-        sz = k[2]
-        sb = k[3]
+        bg = on_or_off(k[2])
+        fg = on_or_off(k[3])
+        sz = k[1]
+        sb = k[0]
 
         if bg == -1 or fg == -1:
             print('Warning: %s no off or on' % str(k))
@@ -72,6 +62,10 @@ def main():
         data = int(dfg.get_group(k)['N'].iloc[0])
         stats[bg][fg][sz][sb].append(data)
     debug(stats)
+    return stats
+
+
+def show_summary(stats, df):
 
     sizes = df['size'].unique()
     om = ['off', 'on ']
@@ -85,8 +79,52 @@ def main():
                     data = stats[bg][fg][sz][sb]
                     if len(data) == 0:
                         continue
-                    print('    %s %s %1.2f' % (om[bg], om[fg], np.mean(data)))
+                    print('    %s %s %1.2f %1.2f' % (om[bg], om[fg], np.median(data), np.mean(data)))
 
+
+def show_detail(df, stats=None):
+    dfg = df.groupby(['subject', 'size', 'bg', 'fg'])
+
+    for k, v in sorted(dfg.groups.iteritems()):
+        sb = k[0]
+        sz = k[1]
+        bg = k[2]
+        fg = k[3]
+
+        bg_b = on_or_off(bg)
+        fg_b = on_or_off(fg)
+
+        N = int(dfg.get_group(k)['N'].iloc[0])
+        indicator = ''
+        m = 0.0
+        om = [u'⦿', u'●']
+
+        if stats is not None:
+            data = stats[bg_b][fg_b][sz][sb]
+            m = np.median(data)
+            if N < m:
+                indicator = ' ! '
+
+        s = u"%s  %3d %8.2f %s %8.2f %d [%2.1f] %s\n" % (sb, sz, bg, om[bg_b], fg, N, m, indicator)
+        sys.stdout.write(s.encode('utf-8'))
+
+
+def main():
+    global do_debug
+    parser = argparse.ArgumentParser(description='CT - Analysis')
+    parser.add_argument('data', nargs='+', type=str, default=['-'])
+    parser.add_argument('--debug', action="store_true", default=False)
+    args = parser.parse_args()
+
+    do_debug = args.debug
+
+    df = read_data(args.data)
+    df = df[df.bg != -1]
+
+    stats = make_stats(df)
+
+    show_detail(df, stats=stats)
+    show_summary(stats, df)
 
 if __name__ == "__main__":
     main()
