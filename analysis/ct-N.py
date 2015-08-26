@@ -9,6 +9,10 @@ from collections import defaultdict
 from functools import partial
 import numpy as np
 
+#global flags
+do_debug = False
+
+
 def NestedDefaultDict(levels, baseFn):
     def NDD(lvl):
         return partial(defaultdict, NDD(lvl-1)) if lvl > 0 else baseFn
@@ -26,6 +30,7 @@ def read_data(file_list):
             df = df.append(to_append, ignore_index=True)
     return df
 
+
 def on_or_off(value):
     on = [0, 90, 180, 270]
     value = abs(value)
@@ -34,17 +39,27 @@ def on_or_off(value):
     else:
         return 0
 
+
+def debug(*args, **kwargs):
+    if do_debug:
+        print(*args, **kwargs)
+
+
 def main():
+    global do_debug
     parser = argparse.ArgumentParser(description='CT - Analysis')
     parser.add_argument('data', nargs='+', type=str, default=['-'])
+    parser.add_argument('--debug', action="store_true", default=False)
     args = parser.parse_args()
+
+    do_debug = args.debug
 
     df = read_data(args.data)
     df = df[df.bg != -1]
     dfg = df.groupby(['bg', 'fg', 'size', 'subject'])
 
     stats = NestedDefaultDict(4, list)
-    print (dfg.groups)
+    debug(dfg.groups, file)
     for k, v in dfg.groups.iteritems():
         bg = on_or_off(k[0])
         fg = on_or_off(k[1])
@@ -56,7 +71,7 @@ def main():
             continue
         data = int(dfg.get_group(k)['N'].iloc[0])
         stats[bg][fg][sz][sb].append(data)
-    print(stats)
+    debug(stats)
 
     sizes = df['size'].unique()
     om = ['off', 'on ']
