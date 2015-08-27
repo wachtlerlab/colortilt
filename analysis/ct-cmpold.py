@@ -22,6 +22,7 @@ def main():
     parser.add_argument('subject', type=str)
     parser.add_argument('olddata', type=str)
     parser.add_argument('data', nargs='+', type=str, default=['-'])
+    parser.add_argument('--inner', action='store_true', default=False)
 
     args = parser.parse_args()
     df = read_data(args.data)
@@ -35,7 +36,11 @@ def main():
     dfi = df.set_index(['size', 'bg', 'fg'])
     dfo = old_df.set_index(['size', 'bg', 'fg'])
 
-    dfa = pd.concat([dfi, dfo], axis=1)
+    kwargs = {}
+    if args.inner:
+        kwargs['join'] = 'inner'
+
+    dfa = pd.concat([dfi, dfo], axis=1, **kwargs)
     x = dfa.reset_index()
     x.subject = args.subject
     x.to_csv(sys.stdout, index=False)
