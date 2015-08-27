@@ -58,7 +58,8 @@ def main():
     x.columns = columns
 
     if args.combine:
-        subjects = '_'.join(map(lambda x: x[:2],  args.subjects))
+        all_subjects = df['subject'].unique()
+        subjects = '_'.join(map(lambda x: x[:2],  all_subjects))
         x['subject'] = subjects
 
     x.to_csv(sys.stdout, index=False)
