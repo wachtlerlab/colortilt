@@ -79,7 +79,10 @@ def show_summary(stats, df):
                     data = stats[bg][fg][sz][sb]
                     if len(data) == 0:
                         continue
-                    print('    %s %s %1.2f %1.2f' % (om[bg], om[fg], np.median(data), np.mean(data)))
+                    d_medi = np.median(data)
+                    d_mean = np.mean(data)
+                    indicator = ' ! ' if d_mean != d_medi else ''
+                    print('    %s %s %3.2f [%2.1f] %s' % (om[bg], om[fg], d_mean, d_medi, indicator))
 
 
 def show_detail(df, stats=None, missing_only=True):
