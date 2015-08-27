@@ -8,6 +8,7 @@ import argparse
 import yaml
 import sys, os
 import fnmatch
+import datetime
 
 
 def calc_angle_shift(phi, baseline, input_is_radiants=False):
@@ -93,8 +94,13 @@ class ColortiltExperiment(object):
         if len(file_list) > 1:
             for data in file_list[1:]:
                 to_append = pd.read_csv(data, skipinitialspace=True)
+                fname = os.path.basename(data)
+                to_append['date'] = datetime.datetime.strptime(fname[:13], '%Y%m%dT%H%M')
                 df = df.append(to_append, ignore_index=True)
-        notused = set(df.columns) - {'size', 'bg', 'fg', 'phi_start', 'side', 'duration', 'phi'}
+
+
+
+        notused = set(df.columns) - {'size', 'bg', 'fg', 'phi_start', 'side', 'duration', 'phi', 'date'}
         for column in list(notused):
             del df[column]
         df['subject'] = subject
