@@ -368,6 +368,8 @@ def main():
     elif 'delta' in df.columns:
         fig = plot_delta_combined(df, args)
     elif 'm_plus' in df.columns:
+        fig = plot_sizerel(df, args)
+    elif 'm_mean' in df.columns:
         fig = plot_sizerel_combined(df, args)
     else:
         raise ValueError('Unknown data set')
