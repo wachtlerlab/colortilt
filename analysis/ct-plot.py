@@ -24,10 +24,19 @@ def read_data(file_list):
     return df
 
 
+def mk_rgb(value):
+    if type(value) == str and len(value) == 7 and value[0] == '#':
+        import struct
+        t = map(lambda x: x/255.0, struct.unpack('BBB', value[1:].decode('hex')))
+        return list(t + [1.0, ])
+    raise ValueError('Invalid input')
+
+
 def make_idx2pos():
     pos_map = {-1: (1, 1), 0: (1, 2), 45: (0, 2), 90: (0, 1), 135: (0, 0), 180: (1, 0), 225: (2, 0), 270: (2, 1), 315: (2, 2)}
     pos_idx = {k: pos_map[k][0]*3+pos_map[k][1]+1 for k in pos_map}
     return pos_idx
+
 
 def color_for_size(size, in_hsv=False):
     cs_map = {
@@ -35,6 +44,12 @@ def color_for_size(size, in_hsv=False):
         '40': [0.65098041296005249, 0.80784314870834351, 0.89019608497619629, 1.0],
         '160':  [0.9020069262560676, 0.1649519457244405, 0.17131872735187115, 1.0]
     }
+
+    #cs_map = {
+    #    '10':  mk_rgb('#ffeda0'),
+    #    '40': mk_rgb('#feb24c'),
+    #    '160':  mk_rgb('#f03b20')
+    #}
 
     c = cs_map[str(size)]
     if in_hsv:
@@ -115,6 +130,7 @@ def plot_shifts(df, cargs):
                     arr = dfc_group.get_group((s, bg, subject))
                 except KeyError:
                     sys.stderr.write('[W] %s %.2f %.2f not present\n' % (subject, s, bg))
+                    continue
 
                 plot_style = style_for_size_and_subject(s, cs, len(subjects), cargs)
 
@@ -243,8 +259,8 @@ def plot_delta_combined(df, cargs):
     plt.hold()
     plt.scatter(map(lambda x: x/180.0*np.pi, bgs), np.abs(slope), c=colors, s=40, marker='o')
     ax.set_rmax(np.max(np.abs(slope))*1.05)
-
     return figures
+
 
 def plot_ratio(df, cargs):
     fig = plt.figure()
@@ -342,6 +358,112 @@ def plot_sizerel_combined(df, cargs):
     return [fig]
 
 
+def plot_shifts_individual(df, cargs):
+
+    groups_g = ['subject', 'size', 'date', 'side', 'bg']
+    dfc_group = df.groupby(groups_g)
+
+    bgs = df['bg'].unique()
+    subjects = df['subject'].unique()
+    sizes = sorted(df['size'].unique())
+    pos_idx = make_idx2pos()
+
+    max_shift = np.max(np.abs(df['shift'])) * 1.05
+    subject_str = make_subject_string(subjects)
+    figures = []
+    fig = plt.figure()
+
+    for k, v in sorted(dfc_group.groups.iteritems()):
+        subject, size, date, side, bg = k
+        try:
+            arr = dfc_group.get_group(k)
+        except KeyError:
+            sys.stderr.write('[W] %s %.2f %.2f not present\n' % (subject, size, bg))
+            continue
+
+        if len(arr) != 8:
+            print('skipping %s' % (str(date)), file=sys.stderr)
+            continue
+
+        ax = plt.subplot(3, 3, pos_idx[bg])
+
+        plt.axhline(y=0, color='#777777')
+        plt.axvline(x=0, color='#777777')
+        date = str(np.unique(arr['date']))
+        side = str(np.unique(arr['side']))
+        #sstr = size_to_label(s)
+        #lbl = sstr if len(subjects) == 1 else sstr + ' ' + subject[:2]
+        #plt.errorbar(arr['fg'], arr['shift'], yerr=arr['err'], label=lbl, **plot_style)
+        x = arr.sort(['fg_rel'])
+        plt.plot(x['fg_rel'], x['shift'], label="%s %s" % (date, side))
+        plt.xlim([-180, 180])
+        plt.ylim([-1*max_shift, max_shift])
+        if pos_idx[bg] in [3, 6]:
+            plt.legend(loc=4, fontsize=12)
+
+        ax.annotate(u"%4d°" % int(bg), xy=(.05, .95),  xycoords='axes fraction',
+                    horizontalalignment='left', verticalalignment='top',
+                    fontsize=18, family='Input Mono', color=angles_to_color([bg])[0])
+
+    return [fig]
+
+
+def plot_shifts_cmpold(df, cargs):
+    dfc_group = df.groupby(['size', 'bg', 'subject'])
+
+    bgs = df['bg'].unique()
+    subjects = df['subject'].unique()
+    sizes = sorted(df['size'].unique())
+    pos_idx = make_idx2pos()
+
+    max_shift = np.max(np.abs(df['shift'])) * 1.05
+    subject_str = make_subject_string(subjects)
+    figures = []
+
+    if not cargs.single:
+        fig = get_figure(figures, cargs)
+        if not cargs.no_title:
+            plt.suptitle(subject_str, fontsize=12)
+
+    for idx, bg in enumerate(bgs):
+        fig = get_figure(figures, cargs)
+        if cargs.single:
+            ax = plt.subplot(1, 1, 1)
+            if not cargs.no_title:
+                plt.suptitle(subject_str + " " + str(bg))
+            setattr(fig, 'name', subject_str + " " + str(bg))
+        else:
+            ax = plt.subplot(3, 3, pos_idx[bg])
+        for si, s in enumerate(sizes):
+            for cs, subject in enumerate(subjects):
+                try:
+                    arr = dfc_group.get_group((s, bg, subject))
+                except KeyError:
+                    sys.stderr.write('[W] %s %.2f %.2f not present\n' % (subject, s, bg))
+                    continue
+
+                plot_style = style_for_size_and_subject(s, cs, len(subjects), cargs)
+                plt.hold(True)
+                plt.axhline(y=0, color='#777777')
+                plt.axvline(x=0, color='#777777')
+                sstr = size_to_label(s)
+                lbl = sstr if len(subjects) == 1 else sstr + ' ' + subject[:2]
+
+                x = arr[np.isfinite(arr['shift'])]
+                print(x)
+                plt.errorbar(x['fg'], x['shift'], yerr=x['err'], label=lbl, color='r')
+                plt.errorbar(arr['fg'], arr['oshift'], yerr=arr['oerr'], label=lbl + '-old', color='k')
+                plt.xlim([-180, 180])
+                plt.ylim([-1*max_shift, max_shift])
+                if pos_idx[bg] == 6:
+                    plt.legend(loc=4, fontsize=12)
+
+                ax.annotate(u"%4d°" % int(bg), xy=(.05, .95),  xycoords='axes fraction',
+                            horizontalalignment='left', verticalalignment='top',
+                            fontsize=18, family='Input Mono', color=angles_to_color([bg])[0])
+
+    return figures
+
 def main():
     parser = argparse.ArgumentParser(description='CT - Analysis')
     parser.add_argument('data', type=str, nargs='+', default='-')
@@ -361,7 +483,11 @@ def main():
 
     plt.style.use(args.style)
 
-    if 'shift' in df.columns:
+    if 'N' not in df.columns:
+        fig = plot_shifts_individual(df, args)
+    elif 'oshift' in df.columns:
+        fig = plot_shifts_cmpold(df, args)
+    elif 'shift' in df.columns:
         fig = plot_shifts(df, args)
     elif 'ratio' in df.columns:
         fig = plot_ratio(df, args)
