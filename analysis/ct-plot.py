@@ -229,8 +229,8 @@ def plot_delta_combined(df, cargs):
         lbl = str(bg)
         plt.scatter(x, y, color=colors[idx], marker='o', label=lbl, s=40)
 
-    plt.xlabel(u'40°')
-    plt.ylabel(u'10° - 160°')
+    plt.xlabel(u'2°')
+    plt.ylabel(u'0.5° - 8°')
     plt.xlim([np.min(px), np.max(px)])
     #plt.legend(loc=2)
 
