@@ -312,6 +312,7 @@ def plot_sizerel(df, cargs):
     return [fig]
 
 def plot_sizerel_combined(df, cargs):
+    #df = df.sort(['size', 'm_mean'], ascending=[1, 1])
     dfc_group = df.groupby('bg')
 
     fig = plt.figure()
@@ -320,21 +321,20 @@ def plot_sizerel_combined(df, cargs):
     colors = angles_to_color(bgs)
     fig.hold()
 
-    y_max = np.max(np.abs(df['m_mean'])) * 1.05
-    y_min = np.min(np.abs(df['m_mean'])) * 0.95
+    y_max = np.max(np.abs(df['m_mean'])) * 1.10
 
     for idx, bg in enumerate(bgs):
         arr = dfc_group.get_group(bg)
         x = 2*np.arctan2(arr['size'], 2.0*1145.0)/np.pi*180.0
         x = np.log2(x)
-        plt.plot(x, arr['m_mean'], color=colors[idx])
+        plt.errorbar(x, arr['m_mean'], yerr=arr['m_merr'], color=colors[idx])
         plt.scatter(x, arr['m_mean'], color=colors[idx], marker='.', s=140, label=u'%03s°' % str(int(bg)))
         plt.xlabel('stimulus size [deg]')
 
     labels = [u'0.5°', u'2°', u'8°']
     plt.xticks(x, labels)
     plt.ylabel('induced hue shift [deg]')
-    plt.ylim([y_min, y_max])
+    plt.ylim([0, y_max])
     plt.legend()
 
     setattr(fig, 'name', 'sizerel')
