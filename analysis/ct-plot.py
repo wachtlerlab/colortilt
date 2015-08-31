@@ -106,7 +106,7 @@ def plot_shifts(df, cargs):
     sizes = sorted(df['size'].unique())
     pos_idx = make_idx2pos()
 
-    max_shift = np.max(np.abs(df['shift'])) * 1.05
+    ylim = cargs.ylim or np.max(np.abs(df['shift'])) * 1.05
     subject_str = make_subject_string(subjects)
     figures = []
 
@@ -140,7 +140,7 @@ def plot_shifts(df, cargs):
                 lbl = sstr if len(subjects) == 1 else sstr + ' ' + subject[:2]
                 plt.errorbar(arr['fg'], arr['shift'], yerr=arr['err'], label=lbl, **plot_style)
                 plt.xlim([-180, 180])
-                plt.ylim([-1*max_shift, max_shift])
+                plt.ylim([-1*ylim, ylim])
                 if pos_idx[bg] == 6:
                     plt.legend(loc=4, fontsize=12)
 
@@ -464,6 +464,7 @@ def plot_shifts_cmpold(df, cargs):
 
     return figures
 
+
 def main():
     parser = argparse.ArgumentParser(description='CT - Analysis')
     parser.add_argument('data', type=str, nargs='+', default='-')
@@ -473,6 +474,7 @@ def main():
     parser.add_argument('--save', default=False, action='store_true')
     parser.add_argument('--legend', dest='legend', action='store_true', default=False)
     parser.add_argument('--no-title', dest='no_title', action='store_true', default=False)
+    parser.add_argument('--ylim', default=None, type=float)
     parser.add_argument('-H, --height', dest='height', type=float, default=13.7)
     parser.add_argument('-W, --width', dest='width', type=float, default=24.7)
     parser.add_argument('-U, --unit', dest='unit', type=str, default='cm')
