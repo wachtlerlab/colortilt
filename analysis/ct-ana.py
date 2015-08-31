@@ -37,7 +37,7 @@ def read_data(file_list):
 def main():
     parser = argparse.ArgumentParser(description='CT - Analysis')
     parser.add_argument('data', type=str)
-    parser.add_argument('--combine', type=bool, default=False)
+    parser.add_argument('--combine', action='store_true', default=False)
     args = parser.parse_args()
 
     df = read_data([args.data])
