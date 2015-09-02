@@ -82,7 +82,7 @@ def style_for_size_and_subject(size, subject, n_subjects, cargs):
         cs_map = {
             '10':  [0.60, 0.60, 0.60, 1.0],
             '40': [0.35, 0.35, 0.35, 1.0],
-            '160':  [0.0, 0.0, 0.0, 1.0]
+            '160':  [0.1, 0.1, 0.1, 1.0]
         }
         c = cs_map[str(size)]
         line_styles = ['-', '--', ':']
