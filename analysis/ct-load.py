@@ -103,8 +103,6 @@ class ColortiltExperiment(object):
                 to_append['date'] = datetime.datetime.strptime(fname[:13], '%Y%m%dT%H%M')
                 df = df.append(to_append, ignore_index=True)
 
-
-
         notused = set(df.columns) - {'size', 'bg', 'fg', 'phi_start', 'side', 'duration', 'phi', 'date'}
         for column in list(notused):
             del df[column]
@@ -117,13 +115,13 @@ class ColortiltExperiment(object):
         dirs = filter(os.path.isdir, map(lambda x: os.path.join(dpath, x), os.listdir(dpath)))
         return map(os.path.basename, dirs)
 
+
 def main():
     parser = argparse.ArgumentParser(description='CT - Analysis')
     parser.add_argument('--data', nargs='+', type=str)
     parser.add_argument('--exclude-files', dest='fnfilter', type=str)
     parser.add_argument('experiment', nargs='?', type=str, default=None)
     parser.add_argument('subjects', nargs='*', type=str, default=None)
-    parser.add_argument('--combine', type=bool, default=False)
     args = parser.parse_args()
 
     args_ok = check_args(args)
