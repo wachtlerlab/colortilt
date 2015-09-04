@@ -7,6 +7,8 @@ import numpy as np
 import argparse
 import sys, os
 
+from colortilt.io import read_data
+
 
 def calc_angle_shift(phi, baseline, input_is_radiants=False):
     if input_is_radiants:
@@ -20,18 +22,6 @@ def calc_angle_shift(phi, baseline, input_is_radiants=False):
 
 def stdnerr(x):
     return np.std(x)/np.sqrt(len(x))
-
-
-def read_data(file_list):
-    if len(file_list) == 1 and file_list[0] == '-':
-        file_list[0] = sys.stdin
-
-    df = pd.read_csv(file_list[0], skipinitialspace=True)
-    if len(file_list) > 1:
-        for data in file_list[1:]:
-            to_append = pd.read_csv(data, skipinitialspace=True)
-            df = df.append(to_append, ignore_index=True)
-    return df
 
 
 def main():

@@ -3,6 +3,7 @@ from __future__ import print_function
 from __future__ import division
 
 import colortilt as ct
+from colortilt.io import read_data
 
 import pandas as pd
 import numpy as np
@@ -18,15 +19,6 @@ def calc_angle_shift(phi, baseline, input_is_radiants=False):
     shift += (shift >  180.0) * -360
     shift += (shift < -180.0) *  360
     return shift
-
-
-def read_data(file_list):
-    df = pd.read_csv(file_list[0], skipinitialspace=True)
-    if len(file_list) > 1:
-        for data in file_list[1:]:
-            to_append = pd.read_csv(data, skipinitialspace=True)
-            df = df.append(to_append, ignore_index=True)
-    return df
 
 
 def is_experiment_file(path):
