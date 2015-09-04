@@ -67,9 +67,14 @@ class ColortiltExperiment(object):
         exp = exp_yaml['colortilt']
         return ColortiltExperiment(exp, path)
 
-    def subject_data_path(self, subject):
+    @property
+    def datapath(self):
         data_dir = os.path.expanduser(self.__data['data-path'])
-        data_path = os.path.join(os.path.dirname(self.path), data_dir, subject)
+        data_path = os.path.join(os.path.dirname(self.path), data_dir)
+        return data_path
+
+    def subject_data_path(self, subject):
+        data_path = os.path.join(self.datapath, subject)
         if not os.path.exists(data_path):
             raise IOError('Could not load data from %s\n' % data_path)
         return data_path
@@ -106,6 +111,11 @@ class ColortiltExperiment(object):
         df['subject'] = subject
         return df
 
+    @property
+    def subjects(self):
+        dpath = self.datapath
+        dirs = filter(os.path.isdir, map(lambda x: os.path.join(dpath, x), os.listdir(dpath)))
+        return map(os.path.basename, dirs)
 
 def main():
     parser = argparse.ArgumentParser(description='CT - Analysis')
@@ -123,7 +133,9 @@ def main():
 
     if args.experiment:
         exp = ColortiltExperiment.load_from_path(args.experiment)
-        dfs = map(lambda subject: exp.load_result_data(subject, args.fnfilter), args.subjects)
+        subjects = args.subjects or exp.subjects
+        print('[i] subjects: ' + ' '.join(subjects), file=sys.stderr)
+        dfs = map(lambda subject: exp.load_result_data(subject, args.fnfilter), subjects)
         df = pd.concat(dfs, ignore_index=True)
     else:
         df = read_data(args.data)
