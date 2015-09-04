@@ -2,7 +2,7 @@
 from __future__ import print_function
 from __future__ import division
 
-from colortilt import ColortiltExperiment
+import colortilt as ct
 
 import pandas as pd
 import numpy as np
@@ -63,7 +63,7 @@ def main():
         sys.exit(-1)
 
     if args.experiment:
-        exp = ColortiltExperiment.load_from_path(args.experiment)
+        exp = ct.Experiment.load_from_path(args.experiment)
         subjects = args.subjects or exp.subjects
         print('[i] subjects: ' + ' '.join(subjects), file=sys.stderr)
         dfs = map(lambda subject: exp.load_result_data(subject, args.fnfilter), subjects)

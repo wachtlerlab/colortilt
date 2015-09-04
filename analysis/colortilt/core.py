@@ -9,7 +9,7 @@ import fnmatch
 import datetime
 
 
-class ColortiltExperiment(object):
+class Experiment(object):
 
     def __init__(self, data, path):
         self.__data = data
@@ -23,7 +23,7 @@ class ColortiltExperiment(object):
         exp_yaml = yaml.safe_load(f)
         f.close()
         exp = exp_yaml['colortilt']
-        return ColortiltExperiment(exp, path)
+        return Experiment(exp, path)
 
     @property
     def datapath(self):
