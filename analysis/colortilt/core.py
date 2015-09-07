@@ -6,6 +6,7 @@ import yaml
 import sys, os
 import fnmatch
 import datetime
+import numpy as np
 
 
 class Experiment(object):
@@ -71,3 +72,47 @@ class Experiment(object):
         dpath = self.datapath
         dirs = filter(os.path.isdir, map(lambda x: os.path.join(dpath, x), os.listdir(dpath)))
         return map(os.path.basename, dirs)
+
+
+class GroupedContext(object):
+    def __init__(self, gd, i, group, indicies):
+        self.gd = gd
+        self.i = i
+        self.group = group
+        self.indices = indicies
+
+    def __getitem__(self, item):
+        idx = self.gd.groups.index(item)
+        return self.indices[idx], self.group[idx]
+
+
+class GroupedData(object):
+    def __init__(self, data_frame, groups):
+        df = data_frame
+        self.data_frame = df
+        self.groups = groups
+        self.df_grouped = df.groupby(groups)
+        self.uniquely = map(lambda x: tuple(np.unique(df[x])), groups)
+
+    def __getitem__(self, item):
+        return self.groups.index(item)
+
+    def unique(self, item):
+        idx = self[item]
+        return self.uniquely[idx]
+
+    def apply(self, func):
+        for data, context in self.data:
+            func(data, self, context)
+
+    @property
+    def data(self):
+        for i, group in enumerate(self.df_grouped.groups):
+            indices = map(lambda g, u: u.index(g), group, self.uniquely)
+            context = GroupedContext(self, i, group, indices)
+            try:
+                data = self.df_grouped.get_group(group)
+            except KeyError:
+                print('[W] group not present %s' % str(group), file=sys.stderr)
+                continue
+            yield data, context

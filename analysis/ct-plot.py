@@ -14,6 +14,7 @@ from utils import ggsave
 
 from colortilt.io import read_data
 from colortilt.plot import (angles_to_color, mk_rgb)
+from colortilt.core import GroupedData
 
 
 def make_idx2pos():
@@ -84,23 +85,20 @@ def size_to_label(size):
 
 
 def plot_shift_like(df, cargs, func, *args, **kwargs):
-    dfc_group = df.groupby(['size', 'bg', 'subject'])
-
-    bgs = df['bg'].unique()
-    subjects = df['subject'].unique()
-    sizes = sorted(df['size'].unique())
+    gd = GroupedData(df, ['size', 'bg', 'subject'])
+    subjects = gd.unique('subject')
     pos_idx = make_idx2pos()
 
     ylim = cargs.ylim or np.max(np.abs(df['shift'])) * 1.05
     subject_str = make_subject_string(subjects)
     figures = []
 
-    if not cargs.single:
-        fig = get_figure(figures, cargs)
-        if not cargs.no_title:
-            plt.suptitle(subject_str, fontsize=12)
+    for data, context in gd.data:
+        _, bg = context['bg']
+        si, s = context['size']
+        cs, subject = context['subject']
+        group = context.group
 
-    for idx, bg in enumerate(bgs):
         fig = get_figure(figures, cargs)
         if cargs.single:
             ax = plt.subplot(1, 1, 1)
@@ -109,32 +107,24 @@ def plot_shift_like(df, cargs, func, *args, **kwargs):
             setattr(fig, 'name', subject_str + " " + str(bg))
         else:
             ax = plt.subplot(3, 3, pos_idx[bg])
-        for si, s in enumerate(sizes):
-            for cs, subject in enumerate(subjects):
-                grp = (s, bg, subject)
-                try:
-                    arr = dfc_group.get_group(grp)
-                except KeyError:
-                    sys.stderr.write('[W] %s %.2f %.2f not present\n' % (subject, s, bg))
-                    continue
 
-                plot_style = style_for_size_and_subject(s, cs, len(subjects), cargs)
-                sstr = size_to_label(s)
-                lbl = sstr if len(subjects) == 1 else sstr + ' ' + subject[:2]
-                plot_style['label'] = lbl
-                plt.axhline(y=0, color='#777777')
-                plt.axvline(x=0, color='#777777')
+        plot_style = style_for_size_and_subject(s, cs, len(subjects), cargs)
+        sstr = size_to_label(s)
+        lbl = sstr if len(subjects) == 1 else sstr + ' ' + subject[:2]
+        plot_style['label'] = lbl
+        plt.axhline(y=0, color='#777777')
+        plt.axvline(x=0, color='#777777')
 
-                func(arr, grp, ax, plot_style, *args, **kwargs)
+        func(data, group, ax, plot_style, *args, **kwargs)
 
-                plt.xlim([-180, 180])
-                plt.ylim([-1*ylim, ylim])
-                if pos_idx[bg] == 6:
-                    plt.legend(loc=4, fontsize=12)
+        plt.xlim([-180, 180])
+        plt.ylim([-1*ylim, ylim])
+        if pos_idx[bg] == 6:
+            plt.legend(loc=4, fontsize=12)
 
-                ax.annotate(u"%4d°" % int(bg), xy=(.05, .95),  xycoords='axes fraction',
-                            horizontalalignment='left', verticalalignment='top',
-                            fontsize=18, family='Input Mono', color=angles_to_color([bg])[0])
+        ax.annotate(u"%4d°" % int(bg), xy=(.05, .95),  xycoords='axes fraction',
+                    horizontalalignment='left', verticalalignment='top',
+                    fontsize=18, family='Input Mono', color=angles_to_color([bg])[0])
 
 
 def plot_shifts(df, cargs):
