@@ -84,6 +84,39 @@ def size_to_label(size):
     return size_map[str(size)]
 
 
+class ShiftPlotter(object):
+
+    bg2idx_map = make_idx2pos()
+
+    def __init__(self, cargs):
+        self.m = 3
+        self.n = 3
+        self.__cargs = cargs
+        self.figures = [None] * (self.m * self.n)
+        self.single = self.__cargs.single
+        self.mapper = lambda x: self.bg2idx_map[x]
+
+    def __getitem__(self, item):
+        item -= 1
+        if self.figures[item] is None:
+            fig = plt.figure()
+            plt.hold(True)
+            self.figures[item] = fig
+
+        return self.figures[item]
+
+    def subplot(self, k):
+        idx = self.mapper(k)
+        if self.single:
+            fig = self[idx]
+            plt.figure(fig.number)
+            ax = plt.subplot(1, 1, 1)
+        else:
+            fig = self[1]
+            ax = plt.subplot(self.m, self.n, idx)
+        return ax, fig
+
+
 def plot_shift_like(df, cargs, func, *args, **kwargs):
     gd = GroupedData(df, ['size', 'bg', 'subject'])
     subjects = gd.unique('subject')
@@ -91,7 +124,8 @@ def plot_shift_like(df, cargs, func, *args, **kwargs):
 
     ylim = cargs.ylim or np.max(np.abs(df['shift'])) * 1.05
     subject_str = make_subject_string(subjects)
-    figures = []
+
+    layout = ShiftPlotter(cargs)
 
     for data, context in gd.data:
         _, bg = context['bg']
@@ -99,14 +133,11 @@ def plot_shift_like(df, cargs, func, *args, **kwargs):
         cs, subject = context['subject']
         group = context.group
 
-        fig = get_figure(figures, cargs)
+        ax, fig = layout.subplot(bg)
         if cargs.single:
-            ax = plt.subplot(1, 1, 1)
             if not cargs.no_title:
                 plt.suptitle(subject_str + " " + str(bg))
             setattr(fig, 'name', subject_str + " " + str(bg))
-        else:
-            ax = plt.subplot(3, 3, pos_idx[bg])
 
         plot_style = style_for_size_and_subject(s, cs, len(subjects), cargs)
         sstr = size_to_label(s)
