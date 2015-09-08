@@ -64,10 +64,12 @@ def main():
         df = read_data(args.data)
         df['subject'] = 'data'
 
-    df['shift'] = df['phi'].combine(df['fg'], calc_angle_shift)
-    df['fg_rel'] = df['fg'].combine(df['bg'], calc_angle_shift)
+    df.rename(columns={'fg': 'fg_abs'}, inplace=True)
+    df['shift'] = df['phi'].combine(df['fg_abs'], calc_angle_shift)
+    df['fg'] = df['fg_abs'].combine(df['bg'], calc_angle_shift)
 
     df.to_csv(sys.stdout, index=False)
+
 
 if __name__ == "__main__":
     main()
