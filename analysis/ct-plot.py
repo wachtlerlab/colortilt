@@ -174,6 +174,38 @@ def plot_shifts_cmpold(df, cargs):
     return plot_shift_like(df, cargs, plot_shift)
 
 
+def plot_shifts_individual(df, cargs):
+    gd = GroupedData(df, ['subject', 'size', 'date', 'side', 'bg'])
+
+    fig = plt.figure()
+    pos_idx = make_idx2pos()
+    max_shift = np.max(np.abs(df['shift'])) * 1.05
+
+    for data, context in gd.data:
+        subject, size, date, side, bg = context.group
+        if len(data) != 8:
+            print('skipping %s' % (str(date)), file=sys.stderr)
+            continue
+
+        ax = plt.subplot(3, 3, pos_idx[bg])
+
+        plt.axhline(y=0, color='#777777')
+        plt.axvline(x=0, color='#777777')
+        date = str(np.unique(data['date']))
+        side = str(np.unique(data['side']))
+        x = data.sort(['fg_rel'])
+        plt.plot(x['fg_rel'], x['shift'], label="%s %s" % (date, side))
+        plt.xlim([-180, 180])
+        plt.ylim([-1*max_shift, max_shift])
+        if pos_idx[bg] in [3, 6]:
+            plt.legend(loc=4, fontsize=6)
+
+        ax.annotate(u"%4d°" % int(bg), xy=(.05, .95),  xycoords='axes fraction',
+                    horizontalalignment='left', verticalalignment='top',
+                    fontsize=18, family='Input Mono', color=angles_to_color([bg])[0])
+    return [fig]
+
+
 def plot_delta(df, cargs):
     dfc_group = df.groupby(['bg', 'sign'])
 
@@ -358,56 +390,6 @@ def plot_sizerel_combined(df, cargs):
     plt.legend()
 
     setattr(fig, 'name', 'sizerel')
-
-    return [fig]
-
-
-def plot_shifts_individual(df, cargs):
-
-    groups_g = ['subject', 'size', 'date', 'side', 'bg']
-    dfc_group = df.groupby(groups_g)
-
-    bgs = df['bg'].unique()
-    subjects = df['subject'].unique()
-    sizes = sorted(df['size'].unique())
-    pos_idx = make_idx2pos()
-
-    max_shift = np.max(np.abs(df['shift'])) * 1.05
-    subject_str = make_subject_string(subjects)
-    figures = []
-    fig = plt.figure()
-
-    for k, v in sorted(dfc_group.groups.iteritems()):
-        subject, size, date, side, bg = k
-        try:
-            arr = dfc_group.get_group(k)
-        except KeyError:
-            sys.stderr.write('[W] %s %.2f %.2f not present\n' % (subject, size, bg))
-            continue
-
-        if len(arr) != 8:
-            print('skipping %s' % (str(date)), file=sys.stderr)
-            continue
-
-        ax = plt.subplot(3, 3, pos_idx[bg])
-
-        plt.axhline(y=0, color='#777777')
-        plt.axvline(x=0, color='#777777')
-        date = str(np.unique(arr['date']))
-        side = str(np.unique(arr['side']))
-        #sstr = size_to_label(s)
-        #lbl = sstr if len(subjects) == 1 else sstr + ' ' + subject[:2]
-        #plt.errorbar(arr['fg'], arr['shift'], yerr=arr['err'], label=lbl, **plot_style)
-        x = arr.sort(['fg_rel'])
-        plt.plot(x['fg_rel'], x['shift'], label="%s %s" % (date, side))
-        plt.xlim([-180, 180])
-        plt.ylim([-1*max_shift, max_shift])
-        if pos_idx[bg] in [3, 6]:
-            plt.legend(loc=4, fontsize=12)
-
-        ax.annotate(u"%4d°" % int(bg), xy=(.05, .95),  xycoords='axes fraction',
-                    horizontalalignment='left', verticalalignment='top',
-                    fontsize=18, family='Input Mono', color=angles_to_color([bg])[0])
 
     return [fig]
 
