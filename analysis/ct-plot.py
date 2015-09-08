@@ -298,38 +298,6 @@ def plot_delta_combined(df, cargs):
     return figures
 
 
-def plot_ratio(df, cargs):
-    fig = plt.figure()
-
-    dfc_group = df.groupby(['subject', 'bg'])
-    bgs = df['bg'].unique()
-    pos_idx = make_idx2pos()
-
-    max_ratio = np.max(np.abs(df['ratio'])) * 1.05
-    df = df.sort(['bg', 'subject'])
-
-    for idx, bg in enumerate(bgs):
-        for s in df['subject'].unique():
-            plt.subplot(3, 3, pos_idx[bg])
-            try:
-                arr = dfc_group.get_group((s, bg))
-                plt.axhline(y=0, color='#777777')
-                plt.axvline(x=0, color='#777777')
-                plt.plot(arr['fg'], arr['ratio'], label=str(s))
-                plt.xlim([-180, 180])
-                if pos_idx[bg] == 6:
-                    plt.legend(loc=2)
-            except KeyError:
-                sys.stderr.write('[W] %sf %.2f not present\n' % (s, bg))
-
-        plt.xlabel(str(bg))
-
-    subjects = df['subject'].unique()
-    if len(subjects) == 1:
-        plt.suptitle('%s' % (subjects[0]), fontsize=12)
-
-    return [fig]
-
 def plot_sizerel(df, cargs):
     dfc_group = df.groupby('bg')
 
@@ -420,8 +388,6 @@ def main():
         fig = plot_shifts_cmpold(df, args)
     elif 'shift' in df.columns:
         fig = plot_shifts(df, args)
-    elif 'ratio' in df.columns:
-        fig = plot_ratio(df, args)
     elif 'delta' in df.columns:
         fig = plot_delta_combined(df, args)
     elif 'm_plus' in df.columns:
