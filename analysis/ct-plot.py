@@ -84,17 +84,15 @@ def size_to_label(size):
     return size_map[str(size)]
 
 
-class ShiftPlotter(object):
+class Plotter(object):
 
-    bg2idx_map = make_idx2pos()
-
-    def __init__(self, cargs):
-        self.m = 3
-        self.n = 3
+    def __init__(self, cargs, m, n):
+        self.m = m
+        self.n = n
         self.__cargs = cargs
         self.figures = [None] * (self.m * self.n)
         self.single = self.__cargs.single
-        self.mapper = lambda x: self.bg2idx_map[x]
+        self.mapper = lambda x: x
 
     def __getitem__(self, item):
         item -= 1
@@ -105,16 +103,25 @@ class ShiftPlotter(object):
 
         return self.figures[item]
 
-    def subplot(self, k):
+    def subplot(self, k, polar=False):
         idx = self.mapper(k)
         if self.single:
             fig = self[idx]
             plt.figure(fig.number)
-            ax = plt.subplot(1, 1, 1)
+            ax = plt.subplot(1, 1, 1, polar=polar)
         else:
             fig = self[1]
-            ax = plt.subplot(self.m, self.n, idx)
+            ax = plt.subplot(self.m, self.n, idx, polar=polar)
         return ax, fig
+
+
+class ShiftPlotter(Plotter):
+    bg2idx_map = make_idx2pos()
+
+    def __init__(self, cargs):
+        super(ShiftPlotter, self).__init__(cargs, 3, 3)
+        self.mapper = lambda x: ShiftPlotter.bg2idx_map[x]
+
 
 
 def plot_shift_like(df, cargs, func, *args, **kwargs):
@@ -253,17 +260,15 @@ def plot_delta(df, cargs):
 def plot_delta_combined(df, cargs):
     dfc_group = df.groupby(['bg'])
 
-    fig = plt.figure()
+    plot = Plotter(cargs, 1, 2)
+
     bgs = sorted(df['bg'].unique())
     x_stop = df['40'].max() * 1.05
-
     colors = angles_to_color(bgs)
-    fig.hold()
     raw = True
     slope = []
 
-    figures = []
-    fig = get_figure(figures, cargs)
+    ax, fig = plot.subplot(1)
     setattr(fig, 'name', 'scat')
 
     for idx, bg in enumerate(bgs):
@@ -275,8 +280,6 @@ def plot_delta_combined(df, cargs):
         px = np.arange(-5, x_stop, 0.5)
         py = np.polyval(p, px)
         slope.append(p[0])
-        if not cargs.single:
-            plt.subplot(1, 2, 1)
         plt.plot(px, py, color=colors[idx])
         lbl = str(bg)
         plt.scatter(x, y, color=colors[idx], marker='o', label=lbl, s=40)
@@ -286,16 +289,14 @@ def plot_delta_combined(df, cargs):
     plt.xlim([np.min(px), np.max(px)])
     #plt.legend(loc=2)
 
-    if not cargs.single:
-        ax = plt.subplot(1, 2, 2, polar=True)
-    else:
-        fig = get_figure(figures, cargs)
-        setattr(fig, 'name', 'scat-polar')
-        ax = plt.subplot(1, 1, 1, polar=True)
+    ax, fig = plot.subplot(2, polar=True)
+    setattr(fig, 'name', 'scat-polar')
+
     plt.hold()
     plt.scatter(map(lambda x: x/180.0*np.pi, bgs), np.abs(slope), c=colors, s=40, marker='o')
     ax.set_rmax(np.max(np.abs(slope))*1.05)
-    return figures
+
+    return plot.figures
 
 
 def plot_sizerel(df, cargs):
@@ -331,8 +332,8 @@ def plot_sizerel(df, cargs):
     setattr(fig, 'name', 'sizerel')
     return [fig]
 
+
 def plot_sizerel_combined(df, cargs):
-    #df = df.sort(['size', 'm_mean'], ascending=[1, 1])
     dfc_group = df.groupby('bg')
 
     fig = plt.figure()
