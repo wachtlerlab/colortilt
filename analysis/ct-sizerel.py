@@ -56,7 +56,7 @@ def calc_sizerel(df, cargs):
 def main():
     parser = argparse.ArgumentParser(description='CT - Analysis')
     parser.add_argument('data', nargs='+', type=str, default=['-'])
-    parser.add_argument('--mean', type=bool, default=False)
+    parser.add_argument('--mean', action='store_true', default=False)
     args = parser.parse_args()
 
     df = read_data(args.data)
