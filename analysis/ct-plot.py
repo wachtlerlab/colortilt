@@ -414,7 +414,7 @@ def main():
 
     plt.style.use(args.style)
 
-    if 'N' not in df.columns:
+    if 'shift' in df.columns and 'N' not in df.columns:
         fig = plot_shifts_individual(df, args)
     elif 'oshift' in df.columns:
         fig = plot_shifts_cmpold(df, args)
