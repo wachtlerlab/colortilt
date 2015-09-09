@@ -77,9 +77,9 @@ def style_for_size_and_subject(size, subject, n_subjects, cargs):
 
 def size_to_label(size):
     size_map = {
-        '10': u'0.5°',
-        '40': u'  2°',
-        '160': u'  8°'
+        '10': u'½°',
+        '40': u'2°',
+        '160': u'8°'
     }
     return size_map[str(size)]
 
