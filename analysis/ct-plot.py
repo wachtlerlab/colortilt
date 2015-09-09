@@ -26,10 +26,7 @@ def make_idx2pos():
 def color_for_size(size, style='seq_bmr', in_hsv=False):
     import  colortilt.styles as cts
     func = getattr(cts, 'size_colors_' + style)
-    c = func(size)
-    if in_hsv:
-        c = rgb_to_hsv(c[:3])
-    return c
+    return func(size)
 
 def get_figure(figures, cargs):
     if cargs.single or len(figures) == 0:
@@ -144,7 +141,7 @@ class ShiftPlotter(Plotter):
             group = context.group
 
             ax, fig = self.subplot(bg)
-            style = self.style_for_size_and_subject(s, cs)
+            style = self.style_for_size_and_subject(s, subject)
             func(data, group, ax, style, *args, **kwargs)
 
             if bg == 0:
@@ -158,22 +155,14 @@ class ShiftPlotter(Plotter):
 
     def style_for_size_and_subject(self, size, subject):
         n_subjects = len(self.subjects)
-        if not self.cargs.gray:
-            hsv = color_for_size(size, in_hsv=True)
-            hsv[1] = (1.0-(subject/n_subjects))*0.6+0.2
+        color = color_for_size(size, style=self.cargs.color)
+        if n_subjects > 1:
+            cur_subject = self.subjects.index(subject)
+            hsv = rgb_to_hsv(color[:3])
+            hsv[1] = (1.0-(cur_subject/n_subjects))*0.6+0.2
             color = hsv_to_rgb(hsv)
-            style = {'color': color}
-        else:
-            cs_map = {
-                '10':  [0.60, 0.60, 0.60, 1.0],
-                '40': [0.35, 0.35, 0.35, 1.0],
-                '160':  [0.1, 0.1, 0.1, 1.0]
-            }
-            c = cs_map[str(size)]
-            line_styles = ['-', '--', ':']
-            if n_subjects > len(line_styles):
-                raise ValueError('More subjects then available line styles')
-            style =  {'color': c, 'linestyle': line_styles[subject], 'linewidth': 1.5}
+
+        style = {'color': color}
         sstr = size_to_label(size)
         style['label'] = sstr if len(self.subjects) == 1 else sstr + ' ' + subject[:2]
         return style
@@ -386,7 +375,7 @@ def main():
     parser.add_argument('data', type=str, nargs='+', default='-')
     parser.add_argument('--single', action='store_true', default=False)
     parser.add_argument('--style', nargs='*', type=str, default=['ck'])
-    parser.add_argument('--gray', default=False, action='store_true')
+    parser.add_argument('--color', default='seq_bmr', type=str)
     parser.add_argument('--save', default=False, action='store_true')
     parser.add_argument('--legend', dest='legend', action='store_true', default=False)
     parser.add_argument('--no-title', dest='no_title', action='store_true', default=False)
