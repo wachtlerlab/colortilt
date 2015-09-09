@@ -93,6 +93,7 @@ class Plotter(object):
         self.figures = [None] * (self.m * self.n)
         self.single = self.cargs.single
         self.mapper = lambda x: x
+        self.__ax_cache = {}
 
     def __getitem__(self, item):
         item -= 1
@@ -112,8 +113,14 @@ class Plotter(object):
         else:
             fig = self[1]
             ax = plt.subplot(self.m, self.n, idx, polar=polar)
+
+        if (ax, fig) not in self.__ax_cache:
+            self.setup_subplot(ax, fig, k, idx)
         return ax, fig
 
+    def setup_subplot(self, ax, fig, k, idx):
+        ax.axhline(y=0, color='#777777')
+        ax.axvline(x=0, color='#777777')
 
 class ShiftPlotter(Plotter):
     bg2idx_map = make_idx2pos()
@@ -132,21 +139,35 @@ class ShiftPlotter(Plotter):
         super(ShiftPlotter, self).__init__(cargs, m, n)
         self.mapper = lambda x: idx_map[x]
         self.gd = GroupedData(df, ['size', 'bg', 'subject'])
-        self.ylim = cargs.ylim
+        self.ylim = cargs.ylim or np.max(np.abs(df['shift'])) * 1.05
+        self.is_absolute = any(np.unique(df.fg) > 180.0)
 
     @staticmethod
     def make(df, cargs):
         return ShiftPlotter(df, cargs)
 
+    def setup_subplot(self, ax, fig, bg, idx):
+        super(ShiftPlotter, self).setup_subplot(ax, fig, bg, idx)
+        plt.xlim([-180, 180] if not self.is_absolute else [0, 360])
+        plt.ylim([-1*self.ylim, self.ylim])
+        ax.annotate(u"%4d°" % int(bg), xy=(.05, .95),  xycoords='axes fraction',
+                    horizontalalignment='left', verticalalignment='top',
+                    fontsize=18, family='Input Mono', color=angles_to_color([bg])[0])
+
+        subjects = make_subject_string(self.subjects)
+        if not hasattr(fig, 'name'):
+            name = subjects
+            if self.single:
+                name +=  " " + str(bg)
+
+            plt.suptitle(name)
+            setattr(fig, 'name', name)
+
     def __call__(self, func, *args, **kwargs):
         gd = self.gd
-        df = gd.data_frame
 
         subjects = gd.unique('subject')
         pos_idx = make_idx2pos()
-
-        ylim = self.ylim or np.max(np.abs(df['shift'])) * 1.05
-        is_absolute = any(np.unique(df.fg) > 180.0)
 
         for data, context in gd.data:
             data = data.sort('fg')
@@ -161,21 +182,17 @@ class ShiftPlotter(Plotter):
             sstr = size_to_label(s)
             lbl = sstr if len(subjects) == 1 else sstr + ' ' + subject[:2]
             plot_style['label'] = lbl
-            plt.axhline(y=0, color='#777777')
-            plt.axvline(x=0, color='#777777')
-            plt.xlim([-180, 180] if not is_absolute else [0, 360])
-            plt.ylim([-1*ylim, ylim])
 
             func(data, group, ax, plot_style, *args, **kwargs)
 
             if pos_idx[bg] == 6:
                 plt.legend(loc=4, fontsize=12)
 
-            ax.annotate(u"%4d°" % int(bg), xy=(.05, .95),  xycoords='axes fraction',
-                        horizontalalignment='left', verticalalignment='top',
-                        fontsize=18, family='Input Mono', color=angles_to_color([bg])[0])
-
         return self.figures
+
+    @property
+    def subjects(self):
+        return self.gd.unique('subject')
 
 
 def plot_shifts(df, cargs):
