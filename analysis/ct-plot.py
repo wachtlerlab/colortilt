@@ -26,9 +26,7 @@ def make_idx2pos():
 def color_for_size(size, style='seq_bmr', in_hsv=False):
     import  colortilt.styles as cts
     func = getattr(cts, 'size_colors_' + style)
-    cs_map = func()
-
-    c = cs_map[str(size)]
+    c = func(size)
     if in_hsv:
         c = rgb_to_hsv(c[:3])
     return c
