@@ -23,18 +23,10 @@ def make_idx2pos():
     return pos_idx
 
 
-def color_for_size(size, in_hsv=False):
-    cs_map = {
-        '10':  [0.4910111613133375, 0.77181085558498608, 0.38794311670696036, 1.0],
-        '40': [0.65098041296005249, 0.80784314870834351, 0.89019608497619629, 1.0],
-        '160':  [0.9020069262560676, 0.1649519457244405, 0.17131872735187115, 1.0]
-    }
-
-    #cs_map = {
-    #    '10':  mk_rgb('#ffeda0'),
-    #    '40': mk_rgb('#feb24c'),
-    #    '160':  mk_rgb('#f03b20')
-    #}
+def color_for_size(size, style='seq_bmr', in_hsv=False):
+    import  colortilt.styles as cts
+    func = getattr(cts, 'size_colors_' + style)
+    cs_map = func()
 
     c = cs_map[str(size)]
     if in_hsv:
