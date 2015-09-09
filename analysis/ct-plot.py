@@ -57,24 +57,6 @@ def make_subject_string(subjects):
     return title
 
 
-def style_for_size_and_subject(size, subject, n_subjects, cargs):
-    if not cargs.gray:
-        hsv = color_for_size(size, in_hsv=True)
-        hsv[1] = (1.0-(subject/n_subjects))*0.6+0.2
-        color = hsv_to_rgb(hsv)
-        return {'color': color}
-    else:
-        cs_map = {
-            '10':  [0.60, 0.60, 0.60, 1.0],
-            '40': [0.35, 0.35, 0.35, 1.0],
-            '160':  [0.1, 0.1, 0.1, 1.0]
-        }
-        c = cs_map[str(size)]
-        line_styles = ['-', '--', ':']
-        if n_subjects > len(line_styles):
-            raise ValueError('More subjects then available line styles')
-        return {'color': c, 'linestyle': line_styles[subject], 'linewidth': 1.5}
-
 def size_to_label(size):
     size_map = {
         '10': u'½°',
@@ -132,9 +114,9 @@ class ShiftPlotter(Plotter):
         idx_map = ShiftPlotter.bg2idx_map
 
         if self.is_vertical:
-            m, n = 9, 1
-            idx_map = { i*45 : i+2 for i in range(8) }
-            idx_map[-1] = 1
+            bgs = np.unique(df.bg)
+            n, m = 1, len(bgs)
+            idx_map = {fg: idx+1 for idx, fg in enumerate(bgs)}
 
         super(ShiftPlotter, self).__init__(cargs, m, n)
         self.mapper = lambda x: idx_map[x]
@@ -164,12 +146,7 @@ class ShiftPlotter(Plotter):
             setattr(fig, 'name', name)
 
     def __call__(self, func, *args, **kwargs):
-        gd = self.gd
-
-        subjects = gd.unique('subject')
-        pos_idx = make_idx2pos()
-
-        for data, context in gd.data:
+        for data, context in self.gd.data:
             data = data.sort('fg')
             _, bg = context['bg']
             si, s = context['size']
@@ -177,15 +154,10 @@ class ShiftPlotter(Plotter):
             group = context.group
 
             ax, fig = self.subplot(bg)
+            style = self.style_for_size_and_subject(s, cs)
+            func(data, group, ax, style, *args, **kwargs)
 
-            plot_style = style_for_size_and_subject(s, cs, len(subjects), self.cargs)
-            sstr = size_to_label(s)
-            lbl = sstr if len(subjects) == 1 else sstr + ' ' + subject[:2]
-            plot_style['label'] = lbl
-
-            func(data, group, ax, plot_style, *args, **kwargs)
-
-            if pos_idx[bg] == 6:
+            if bg == 0:
                 plt.legend(loc=4, fontsize=12)
 
         return self.figures
@@ -193,6 +165,28 @@ class ShiftPlotter(Plotter):
     @property
     def subjects(self):
         return self.gd.unique('subject')
+
+    def style_for_size_and_subject(self, size, subject):
+        n_subjects = len(self.subjects)
+        if not self.cargs.gray:
+            hsv = color_for_size(size, in_hsv=True)
+            hsv[1] = (1.0-(subject/n_subjects))*0.6+0.2
+            color = hsv_to_rgb(hsv)
+            style = {'color': color}
+        else:
+            cs_map = {
+                '10':  [0.60, 0.60, 0.60, 1.0],
+                '40': [0.35, 0.35, 0.35, 1.0],
+                '160':  [0.1, 0.1, 0.1, 1.0]
+            }
+            c = cs_map[str(size)]
+            line_styles = ['-', '--', ':']
+            if n_subjects > len(line_styles):
+                raise ValueError('More subjects then available line styles')
+            style =  {'color': c, 'linestyle': line_styles[subject], 'linewidth': 1.5}
+        sstr = size_to_label(size)
+        style['label'] = sstr if len(self.subjects) == 1 else sstr + ' ' + subject[:2]
+        return style
 
 
 def plot_shifts(df, cargs):
