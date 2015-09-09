@@ -89,9 +89,9 @@ class Plotter(object):
     def __init__(self, cargs, m, n):
         self.m = m
         self.n = n
-        self.__cargs = cargs
+        self.cargs = cargs
         self.figures = [None] * (self.m * self.n)
-        self.single = self.__cargs.single
+        self.single = self.cargs.single
         self.mapper = lambda x: x
 
     def __getitem__(self, item):
@@ -118,70 +118,84 @@ class Plotter(object):
 class ShiftPlotter(Plotter):
     bg2idx_map = make_idx2pos()
 
-    def __init__(self, cargs):
-        super(ShiftPlotter, self).__init__(cargs, 3, 3)
-        self.mapper = lambda x: ShiftPlotter.bg2idx_map[x]
+    def __init__(self, df, cargs):
+        self.is_vertical = hasattr(cargs, 'vertical') and cargs.vertical
 
+        m, n = 3, 3
+        idx_map = ShiftPlotter.bg2idx_map
 
-def plot_shift_like(df, cargs, func, *args, **kwargs):
-    gd = GroupedData(df, ['size', 'bg', 'subject'])
-    subjects = gd.unique('subject')
-    pos_idx = make_idx2pos()
+        if self.is_vertical:
+            m, n = 9, 1
+            idx_map = { i*45 : i+2 for i in range(8) }
+            idx_map[-1] = 1
 
-    ylim = cargs.ylim or np.max(np.abs(df['shift'])) * 1.05
-    subject_str = make_subject_string(subjects)
+        super(ShiftPlotter, self).__init__(cargs, m, n)
+        self.mapper = lambda x: idx_map[x]
+        self.gd = GroupedData(df, ['size', 'bg', 'subject'])
+        self.ylim = cargs.ylim
 
-    layout = ShiftPlotter(cargs)
+    @staticmethod
+    def make(df, cargs):
+        return ShiftPlotter(df, cargs)
 
-    is_absolute = any(np.unique(df.fg) > 180.0)
-    print("is_abs: " + str(is_absolute), file=sys.stderr)
+    def __call__(self, func, *args, **kwargs):
+        gd = self.gd
+        df = gd.data_frame
 
-    for data, context in gd.data:
-        data = data.sort('fg')
-        _, bg = context['bg']
-        si, s = context['size']
-        cs, subject = context['subject']
-        group = context.group
+        subjects = gd.unique('subject')
+        pos_idx = make_idx2pos()
 
-        ax, fig = layout.subplot(bg)
-        if cargs.single:
-            if not cargs.no_title:
-                plt.suptitle(subject_str + " " + str(bg))
-            setattr(fig, 'name', subject_str + " " + str(bg))
+        ylim = self.ylim or np.max(np.abs(df['shift'])) * 1.05
+        is_absolute = any(np.unique(df.fg) > 180.0)
 
-        plot_style = style_for_size_and_subject(s, cs, len(subjects), cargs)
-        sstr = size_to_label(s)
-        lbl = sstr if len(subjects) == 1 else sstr + ' ' + subject[:2]
-        plot_style['label'] = lbl
-        plt.axhline(y=0, color='#777777')
-        plt.axvline(x=0, color='#777777')
-        plt.xlim([-180, 180] if not is_absolute else [0, 360])
-        plt.ylim([-1*ylim, ylim])
+        for data, context in gd.data:
+            data = data.sort('fg')
+            _, bg = context['bg']
+            si, s = context['size']
+            cs, subject = context['subject']
+            group = context.group
 
-        func(data, group, ax, plot_style, *args, **kwargs)
+            ax, fig = self.subplot(bg)
 
-        if pos_idx[bg] == 6:
-            plt.legend(loc=4, fontsize=12)
+            plot_style = style_for_size_and_subject(s, cs, len(subjects), self.cargs)
+            sstr = size_to_label(s)
+            lbl = sstr if len(subjects) == 1 else sstr + ' ' + subject[:2]
+            plot_style['label'] = lbl
+            plt.axhline(y=0, color='#777777')
+            plt.axvline(x=0, color='#777777')
+            plt.xlim([-180, 180] if not is_absolute else [0, 360])
+            plt.ylim([-1*ylim, ylim])
 
-        ax.annotate(u"%4d°" % int(bg), xy=(.05, .95),  xycoords='axes fraction',
-                    horizontalalignment='left', verticalalignment='top',
-                    fontsize=18, family='Input Mono', color=angles_to_color([bg])[0])
+            func(data, group, ax, plot_style, *args, **kwargs)
+
+            if pos_idx[bg] == 6:
+                plt.legend(loc=4, fontsize=12)
+
+            ax.annotate(u"%4d°" % int(bg), xy=(.05, .95),  xycoords='axes fraction',
+                        horizontalalignment='left', verticalalignment='top',
+                        fontsize=18, family='Input Mono', color=angles_to_color([bg])[0])
+
+        return self.figures
 
 
 def plot_shifts(df, cargs):
+    plotter = ShiftPlotter.make(df, cargs)
+
     def plot_shift(df, grp, ax, style):
         plt.errorbar(df['fg'], df['shift'], yerr=df['err'], **style)
-    return plot_shift_like(df, cargs, plot_shift)
+
+    return plotter(plot_shift)
 
 
 def plot_shifts_cmpold(df, cargs):
+    plotter = ShiftPlotter.make(df, cargs)
     def plot_shift(df, grp, ax, style):
         x = df[np.isfinite(df['shift'])]
         lbl = style['label']
         plt.errorbar(x['fg'], x['shift'], yerr=x['err'], label=lbl, color='r')
         plt.errorbar(df['fg'], df['oshift'], yerr=df['oerr'], label=lbl + '-old', color='k')
 
-    return plot_shift_like(df, cargs, plot_shift)
+    return plotter(plot_shift)
 
 
 def plot_shifts_individual(df, cargs):
