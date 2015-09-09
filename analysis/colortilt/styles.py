@@ -24,3 +24,11 @@ def size_colors_ck01():
     }
 
     return cs_map
+
+
+def size_colors_gray():
+    cs_map = { '10':  [0.60, 0.60, 0.60, 1.0],
+               '40': [0.35, 0.35, 0.35, 1.0],
+               '160':  [0.1, 0.1, 0.1, 1.0]}
+
+    return cs_map
