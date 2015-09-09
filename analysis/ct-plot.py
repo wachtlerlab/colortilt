@@ -390,6 +390,7 @@ def main():
     parser.add_argument('--legend', dest='legend', action='store_true', default=False)
     parser.add_argument('--no-title', dest='no_title', action='store_true', default=False)
     parser.add_argument('--ylim', default=None, type=float)
+    parser.add_argument('--vertical', default=False, action='store_true')
     parser.add_argument('-H, --height', dest='height', type=float, default=13.7)
     parser.add_argument('-W, --width', dest='width', type=float, default=24.7)
     parser.add_argument('-U, --unit', dest='unit', type=str, default='cm')
