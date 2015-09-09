@@ -123,7 +123,6 @@ class ShiftPlotter(Plotter):
         self.mapper = lambda x: ShiftPlotter.bg2idx_map[x]
 
 
-
 def plot_shift_like(df, cargs, func, *args, **kwargs):
     gd = GroupedData(df, ['size', 'bg', 'subject'])
     subjects = gd.unique('subject')
@@ -134,7 +133,11 @@ def plot_shift_like(df, cargs, func, *args, **kwargs):
 
     layout = ShiftPlotter(cargs)
 
+    is_absolute = any(np.unique(df.fg) > 180.0)
+    print("is_abs: " + str(is_absolute), file=sys.stderr)
+
     for data, context in gd.data:
+        data = data.sort('fg')
         _, bg = context['bg']
         si, s = context['size']
         cs, subject = context['subject']
@@ -152,11 +155,11 @@ def plot_shift_like(df, cargs, func, *args, **kwargs):
         plot_style['label'] = lbl
         plt.axhline(y=0, color='#777777')
         plt.axvline(x=0, color='#777777')
+        plt.xlim([-180, 180] if not is_absolute else [0, 360])
+        plt.ylim([-1*ylim, ylim])
 
         func(data, group, ax, plot_style, *args, **kwargs)
 
-        plt.xlim([-180, 180])
-        plt.ylim([-1*ylim, ylim])
         if pos_idx[bg] == 6:
             plt.legend(loc=4, fontsize=12)
 
