@@ -117,7 +117,9 @@ class ShiftPlotter(Plotter):
 
     def setup_subplot(self, ax, fig, bg, idx):
         super(ShiftPlotter, self).setup_subplot(ax, fig, bg, idx)
-        plt.xlim([-180, 180] if not self.is_absolute else [0, 360])
+        is_abs = self.is_absolute
+        plt.xticks(np.arange(45, 360, 45) if is_abs else np.arange(-135, 180, 45))
+        plt.xlim([-180, 180] if not is_abs else [0, 360])
         plt.ylim([-1*self.ylim, self.ylim])
         ax.annotate(u"%4d°" % int(bg), xy=(.05, .95),  xycoords='axes fraction',
                     horizontalalignment='left', verticalalignment='top',
