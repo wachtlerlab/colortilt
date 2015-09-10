@@ -122,7 +122,7 @@ class ShiftPlotter(Plotter):
         is_abs = self.is_absolute
         plt.xticks(np.arange(45, 360, 45) if is_abs else np.arange(-135, 180, 45))
         plt.xlim([-180, 180] if not is_abs else [0, 360])
-        plt.ylim([-1*self.ylim, self.ylim])
+        plt.ylim([-1*self.ylim if self.have_negative else 0, self.ylim])
         ax.annotate(u"%4d°" % int(bg), xy=(.05, .95),  xycoords='axes fraction',
                     horizontalalignment='left', verticalalignment='top',
                     fontsize=18, family='Input Mono', color=angles_to_color([bg])[0])
