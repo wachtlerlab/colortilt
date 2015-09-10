@@ -94,8 +94,9 @@ class Plotter(object):
 class ShiftPlotter(Plotter):
     bg2idx_map = make_idx2pos()
 
-    def __init__(self, df, cargs):
+    def __init__(self, df, column, cargs):
         self.is_vertical = hasattr(cargs, 'vertical') and cargs.vertical
+        self.column = column
 
         m, n = 3, 3
         idx_map = ShiftPlotter.bg2idx_map
@@ -108,12 +109,13 @@ class ShiftPlotter(Plotter):
         super(ShiftPlotter, self).__init__(cargs, m, n)
         self.mapper = lambda x: idx_map[x]
         self.gd = GroupedData(df, ['size', 'bg', 'subject'])
-        self.ylim = cargs.ylim or np.max(np.abs(df['shift'])) * 1.05
+        self.ylim = cargs.ylim or np.max(np.abs(df[column])) * 1.05
         self.is_absolute = any(np.unique(df.fg) > 180.0)
+        self.have_negative = any(np.unique(df[self.column]) < 0)
 
     @staticmethod
-    def make(df, cargs):
-        return ShiftPlotter(df, cargs)
+    def make(df, cargs, column='shift'):
+        return ShiftPlotter(df, column, cargs)
 
     def setup_subplot(self, ax, fig, bg, idx):
         super(ShiftPlotter, self).setup_subplot(ax, fig, bg, idx)
@@ -127,7 +129,7 @@ class ShiftPlotter(Plotter):
 
         subjects = make_subject_string(self.subjects)
         if not hasattr(fig, 'name'):
-            name = subjects
+            name = self.column + ": " + subjects
             if self.single:
                 name +=  " " + str(bg)
 
