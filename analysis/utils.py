@@ -88,6 +88,8 @@ def ggsave(filename = None, plot = None, device = None, format = None,
         if plot:
             if hasattr(plot, 'name'):
                 filename = getattr(plot, 'name') + ".pdf"
+                if ': ' in filename:
+                    filename = filename.replace(': ', '_')
             else:
                 filename = str(hash(plot)) + "." +(format if format else "pdf")
         else:
