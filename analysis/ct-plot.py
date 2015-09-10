@@ -59,8 +59,8 @@ class Plotter(object):
         self.m = m
         self.n = n
         self.cargs = cargs
-        self.figures = [None] * (self.m * self.n)
         self.single = self.cargs.single
+        self.figures = [None] * (self.m * self.n if self.single else 1)
         self.mapper = lambda x: x
         self.__ax_cache = {}
 
