@@ -391,6 +391,7 @@ def main():
     parser.add_argument('-H, --height', dest='height', type=float, default=13.7)
     parser.add_argument('-W, --width', dest='width', type=float, default=24.7)
     parser.add_argument('-U, --unit', dest='unit', type=str, default='cm')
+    parser.add_argument('-P' '--path', dest='path', type=str, default=None)
     args = parser.parse_args()
 
     df = read_data(args.data)
@@ -418,7 +419,7 @@ def main():
 
     if args.save:
         for f in fig:
-            ggsave(plot=f, width=args.width, height=args.height, units=args.unit)
+            ggsave(plot=f, path=args.path, width=args.width, height=args.height, units=args.unit)
     else:
         plt.show()
 
