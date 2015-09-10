@@ -8,7 +8,6 @@ import sys
 
 from colortilt.io import read_data
 
-
 def main():
     parser = argparse.ArgumentParser(description='CT - Analysis')
     parser.add_argument('subject', type=str)
@@ -18,6 +17,11 @@ def main():
 
     args = parser.parse_args()
     df = read_data(args.data)
+
+    if args.subject not in df.subject.unique():
+        print('Subject not in new data!', file=sys.stderr)
+        sys.exit(-1)
+
     df = df[df.subject == args.subject]
     df = df[df.size == 40]
 
