@@ -121,6 +121,7 @@ def main():
     parser.add_argument('data', nargs='+', type=str, default=['-'])
     parser.add_argument('--debug', action="store_true", default=False)
     parser.add_argument('--full', action="store_true", default=False)
+    parser.add_argument('--subjects', action="store_true", default=False)
     args = parser.parse_args()
 
     do_debug = args.debug
@@ -128,10 +129,15 @@ def main():
     df = read_data(args.data)
     df = df[df.bg != -1]
 
-    stats = make_stats(df)
+    if args.subjects:
+        subjects = np.unique(df.subject)
+        print('\n'.join(subjects))
+    else:
+        stats = make_stats(df)
+        show_detail(df, stats=stats, missing_only=not args.full)
+        show_summary(stats, df)
 
-    show_detail(df, stats=stats, missing_only=not args.full)
-    show_summary(stats, df)
+
 
 if __name__ == "__main__":
     main()
