@@ -136,7 +136,11 @@ class ShiftPlotter(Plotter):
             plt.suptitle(name)
             setattr(fig, 'name', name)
 
-    def __call__(self, func, *args, **kwargs):
+    def __call__(self, func=None):
+
+        if func is None:
+            func = self.plot_data
+
         for data, context in self.gd.data:
             data = data.sort('fg')
             _, bg = context['bg']
@@ -146,7 +150,7 @@ class ShiftPlotter(Plotter):
 
             ax, fig = self.subplot(bg)
             style = self.style_for_size_and_subject(s, subject)
-            func(data, group, ax, style, *args, **kwargs)
+            func(data, group, ax, style)
 
             if bg == 0:
                 plt.legend(loc=4, fontsize=12)
@@ -171,14 +175,13 @@ class ShiftPlotter(Plotter):
         style['label'] = sstr if len(self.subjects) == 1 else sstr + ' ' + subject[:2]
         return style
 
+    def plot_data(self, df, grp, ax, style):
+        plt.errorbar(df['fg'], df[self.column], yerr=df['err'], **style)
+
 
 def plot_shifts(df, cargs):
     plotter = ShiftPlotter.make(df, cargs)
-
-    def plot_shift(df, grp, ax, style):
-        plt.errorbar(df['fg'], df['shift'], yerr=df['err'], **style)
-
-    return plotter(plot_shift)
+    return plotter()
 
 
 def plot_shifts_cmpold(df, cargs):
