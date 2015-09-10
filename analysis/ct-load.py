@@ -56,7 +56,8 @@ def main():
 
     if args.experiment:
         exp = ct.Experiment.load_from_path(args.experiment)
-        subjects = args.subjects or exp.subjects
+
+        subjects = filter(lambda s: len(s), args.subjects) or exp.subjects
         print('[i] subjects: ' + ' '.join(subjects), file=sys.stderr)
         dfs = map(lambda subject: exp.load_result_data(subject, args.fnfilter), subjects)
         df = pd.concat(dfs, ignore_index=True)
