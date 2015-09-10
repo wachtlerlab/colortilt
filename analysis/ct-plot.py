@@ -123,13 +123,18 @@ class ShiftPlotter(Plotter):
         plt.xticks(np.arange(45, 360, 45) if is_abs else np.arange(-135, 180, 45))
         plt.xlim([-180, 180] if not is_abs else [0, 360])
         plt.ylim([-1*self.ylim if self.have_negative else 0, self.ylim])
+        color = angles_to_color([bg])[0]
         ax.annotate(u"%4d°" % int(bg), xy=(.05, .95),  xycoords='axes fraction',
                     horizontalalignment='left', verticalalignment='top',
-                    fontsize=18, family='Input Mono', color=angles_to_color([bg])[0])
+                    fontsize=18, family='Input Mono', color=color)
+
+        if is_abs:
+             ax.axvline(x=bg, color=color)
 
         subjects = make_subject_string(self.subjects)
         if not hasattr(fig, 'name'):
-            name = self.column + ": " + subjects
+            qal = "_abs" if self.is_absolute else ""
+            name = self.column + qal + ": " + subjects
             if self.single:
                 name +=  " " + str(bg)
 
@@ -153,7 +158,8 @@ class ShiftPlotter(Plotter):
             func(data, group, ax, style)
 
             if bg == 0:
-                plt.legend(loc=4, fontsize=12)
+                location = 1 if self.is_vertical else 4
+                plt.legend(loc=location, fontsize=12)
 
         return self.figures
 
@@ -179,20 +185,28 @@ class ShiftPlotter(Plotter):
         plt.errorbar(df['fg'], df[self.column], yerr=df['err'], **style)
 
 
-def plot_shifts(df, cargs):
-    plotter = ShiftPlotter.make(df, cargs)
-    return plotter()
+class CompareShiftPlotter(ShiftPlotter):
+    def __init__(self, df, cargs):
+        super(CompareShiftPlotter, self).__init__(df, 'shift', cargs)
 
+    def setup_subplot(self, ax, fig, bg, idx):
+        name = "compare: " + self.gd.unique('subject')[0]
+        if self.single:
+            name +=  " " + str(bg)
+        plt.suptitle(name)
+        setattr(fig, 'name', name)
+        super(ShiftPlotter, self).setup_subplot(ax, fig, bg, idx)
 
-def plot_shifts_cmpold(df, cargs):
-    plotter = ShiftPlotter.make(df, cargs)
-    def plot_shift(df, grp, ax, style):
+    def plot_data(self, df, grp, ax, style):
         x = df[np.isfinite(df['shift'])]
         lbl = style['label']
-        plt.errorbar(x['fg'], x['shift'], yerr=x['err'], label=lbl, color='r')
+        color = color_for_size(40)
+        plt.errorbar(x['fg'], x['shift'], yerr=x['err'], label=lbl, color=color)
         plt.errorbar(df['fg'], df['oshift'], yerr=df['oerr'], label=lbl + '-old', color='k')
 
-    return plotter(plot_shift)
+def plot_shifts_cmpold(df, cargs):
+    plotter = CompareShiftPlotter(df, cargs)
+    return plotter()
 
 
 def plot_shifts_individual(df, cargs):
@@ -404,7 +418,8 @@ def main():
     elif 'oshift' in df.columns:
         fig = plot_shifts_cmpold(df, args)
     elif 'shift' in df.columns:
-        fig = plot_shifts(df, args)
+        plotter = ShiftPlotter.make(df, args)
+        fig = plotter()
     elif 'delta' in df.columns:
         fig = plot_delta_combined(df, args)
     elif 'm_plus' in df.columns:
