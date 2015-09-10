@@ -410,6 +410,9 @@ def main():
         fig = plot_sizerel(df, args)
     elif 'm_mean' in df.columns:
         fig = plot_sizerel_combined(df, args)
+    elif 'duration' in df.columns:
+        plotter = ShiftPlotter.make(df, args, column='duration')
+        fig = plotter()
     else:
         raise ValueError('Unknown data set')
 
