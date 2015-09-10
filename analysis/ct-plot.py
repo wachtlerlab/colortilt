@@ -383,7 +383,7 @@ def main():
     parser.add_argument('--single', action='store_true', default=False)
     parser.add_argument('--style', nargs='*', type=str, default=['ck'])
     parser.add_argument('--color', default='seq_bmr', type=str)
-    parser.add_argument('--save', default=False, action='store_true')
+    parser.add_argument('-S, --save', dest='save', default=False, action='store_true')
     parser.add_argument('--legend', dest='legend', action='store_true', default=False)
     parser.add_argument('--no-title', dest='no_title', action='store_true', default=False)
     parser.add_argument('--ylim', default=None, type=float)
