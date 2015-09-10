@@ -24,6 +24,9 @@ def make_calc_stats(key):
                           'N': len(clean)})
     return calc_stats
 
+def mk_subjects(df):
+    subs = df['subject'].unique()
+    return '_'.join(map(lambda x: x[:2],  subs)) if len(subs) > 1 else subs[0]
 
 def main():
     parser = argparse.ArgumentParser(description='CT - Analysis')
@@ -39,16 +42,13 @@ def main():
     if args.combine:
         groups.remove('subject')
 
-    key = args.what
-
-    gpd = df[['bg', 'fg', 'size', key, 'subject']].groupby(groups, as_index=False)
-    dfg = gpd.apply(make_calc_stats(key))
+    gpd = df[['bg', 'fg', 'size', args.col, 'subject']].groupby(groups, as_index=False)
+    dfg = gpd.apply(make_calc_stats(args.col))
     x = dfg.reset_index()
 
     if args.combine:
-        all_subjects = df['subject'].unique()
-        subjects = '_'.join(map(lambda x: x[:2],  all_subjects))
-        x['subject'] = subjects
+        subs = df['subject'].unique()
+        x['subject'] = '_'.join(map(lambda x: x[:2],  subs)) if len(subs) > 1 else subs[0]
 
     x.to_csv(sys.stdout, index=False)
 
