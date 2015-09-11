@@ -7,6 +7,12 @@ import sys
 
 from colortilt.io import read_data
 
+def filter_control(df):
+    return df[df.bg != -1]
+
+def filter_size(df, size):
+    df = df[df.size == int(size)]
+    return df
 
 def main():
     parser = argparse.ArgumentParser(description='CT analysis - Filter')
@@ -18,10 +24,10 @@ def main():
     df = read_data(args.data)
 
     if args.size is not None:
-        df = df[df.size == int(args.size)]
+        df = filter_size(df, args.size)
 
     if args.ctrl:
-        df = df[df.bg != -1]
+        df = filter_control(df)
 
     df.to_csv(sys.stdout, index=False)
 
