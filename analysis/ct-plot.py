@@ -429,6 +429,9 @@ def main():
     elif 'szdiff' in df.columns:
         plotter = ShiftPlotter.make(df, args, column='szdiff')
         fig = plotter()
+    elif 'spread' in df.columns:
+        plotter = ShiftPlotter.make(df, args, column='spread')
+        fig = plotter()
     else:
         raise ValueError('Unknown data set')
 
