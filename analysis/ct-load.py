@@ -12,6 +12,9 @@ import sys
 
 
 def calc_angle_shift(phi, baseline, input_is_radiants=False):
+    # control is -1, make it 0
+    if baseline == -1:
+        baseline = 0
     if input_is_radiants:
         phi = phi/np.pi*180.0
         baseline = baseline/np.pi*180.0

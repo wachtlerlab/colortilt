@@ -16,7 +16,9 @@ def rename_fg(df, fg_in, fg_out):
     return out
 
 def rel2abs(df, args):
-    df.fg = (df.fg + df.bg) % 360.0
+    ref = df.copy()
+    ref[ref.bg == -1] = 0
+    df.fg = (df.fg + ref.bg) % 360.0
 
     if args.extend:
         fgs = np.unique(df.fg)
