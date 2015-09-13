@@ -31,9 +31,9 @@ def mk_subjects(df):
 def main():
     parser = argparse.ArgumentParser(description='CT - Analysis')
     parser.add_argument('data', nargs='?', type=str, default='-')
-    parser.add_argument('--combine', action='store_true', default=False)
+    parser.add_argument('-C', '--combine', dest='combine', action='store_true', default=False)
     parser.add_argument('--col', type=str, default='shift')
-    parser.add_argument('--mean', action='store_true', default=False)
+    parser.add_argument('-M', '--mean', dest='mean', action='store_true', default=False)
     args = parser.parse_args()
 
     df = read_data([args.data])
