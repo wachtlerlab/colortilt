@@ -141,10 +141,7 @@ class ShiftPlotter(Plotter):
             plt.suptitle(name)
             setattr(fig, 'name', name)
 
-    def __call__(self, func=None):
-
-        if func is None:
-            func = self.plot_data
+    def __call__(self):
 
         for data, context in self.gd.data:
             data = data.sort('fg')
@@ -155,7 +152,7 @@ class ShiftPlotter(Plotter):
 
             ax, fig = self.subplot(bg)
             style = self.style_for_size_and_subject(s, subject)
-            func(data, group, ax, style)
+            self.plot_data(data, group, ax, style)
 
             if bg == 0:
                 location = 1 if self.is_vertical else 4
