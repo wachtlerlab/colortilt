@@ -182,7 +182,10 @@ class ShiftPlotter(Plotter):
         return style
 
     def plot_data(self, df, grp, ax, style):
-        plt.errorbar(df['fg'], df[self.column], yerr=df['err'], **style)
+        if 'err' in df.columns:
+            plt.errorbar(df['fg'], df[self.column], yerr=df['err'], **style)
+        else:
+            plt.plot(df['fg'], df[self.column], **style)
 
 
 class CompareShiftPlotter(ShiftPlotter):
