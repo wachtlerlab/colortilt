@@ -3,11 +3,12 @@ from __future__ import (print_function, division)
 
 import numpy as np
 
+
 def size_colors_seq_bmr(size):
     cs_map = {
-        '10':  [20, 64, 168, 255],  # blue
-        '40': [244, 60, 103, 255],  # magenta
-        '160': [243, 121, 255, 255] # red
+        '10':  [20, 64, 168, 255],    # blue
+        '40':  [243, 121, 255, 255],  # magenta
+        '160': [244, 60, 103, 255]    # red
     }
 
     for k, v in cs_map.iteritems():
@@ -27,8 +28,8 @@ def size_colors_ck01(size):
 
 
 def size_colors_gray(size):
-    cs_map = { '10':  [0.60, 0.60, 0.60, 1.0],
-               '40': [0.35, 0.35, 0.35, 1.0],
-               '160':  [0.1, 0.1, 0.1, 1.0]}
+    cs_map = {'10':  [0.60, 0.60, 0.60, 1.0],
+              '40': [0.35, 0.35, 0.35, 1.0],
+              '160':  [0.1, 0.1, 0.1, 1.0]}
 
     return cs_map[str(size)]
