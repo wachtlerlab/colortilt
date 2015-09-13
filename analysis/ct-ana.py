@@ -54,9 +54,6 @@ def main():
         subs = df['subject'].unique()
         x['subject'] = '_'.join(map(lambda x: x[:2],  subs)) if len(subs) > 1 else subs[0]
 
-    if args.mean:
-        x['size'] = 40 #FIXME
-
     x.to_csv(sys.stdout, index=False)
 
 if __name__ == "__main__":

@@ -46,7 +46,6 @@ def main():
         x = convert2sizerel(x, df)
         x.to_csv(sys.stdout, ignore_index=True)
     else:
-        x['size'] = 40  # FIXME
         x.to_csv(sys.stdout, index=False)
 
     return 0

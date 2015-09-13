@@ -91,6 +91,7 @@ class Plotter(object):
         ax.axhline(y=0, color='#777777')
         ax.axvline(x=0, color='#777777')
 
+
 class ShiftPlotter(Plotter):
     bg2idx_map = make_idx2pos()
 
@@ -108,7 +109,10 @@ class ShiftPlotter(Plotter):
 
         super(ShiftPlotter, self).__init__(cargs, m, n)
         self.mapper = lambda x: idx_map[x]
-        self.gd = GroupedData(df, ['size', 'bg', 'subject'])
+        group = ['size', 'bg', 'subject']
+        if 'size' not in df.columns:
+            del group[0]
+        self.gd = GroupedData(df, group)
         self.ylim = cargs.ylim or np.max(np.abs(df[column])) * 1.05
         self.is_absolute = any(np.unique(df.fg) > 180.0)
         self.have_negative = any(np.unique(df[self.column]) < 0)
@@ -146,19 +150,24 @@ class ShiftPlotter(Plotter):
         for data, context in self.gd.data:
             data = data.sort('fg')
             _, bg = context['bg']
-            si, s = context['size']
-            cs, subject = context['subject']
-            group = context.group
 
             ax, fig = self.subplot(bg)
-            style = self.style_for_size_and_subject(s, subject)
-            self.plot_data(data, group, ax, style)
+            style = self.get_style(data, context)
+            self.plot_data(data, context.group, ax, style)
 
             if bg == 0:
                 location = 1 if self.is_vertical else 4
                 plt.legend(loc=location, fontsize=12)
 
         return self.figures
+
+    def get_style(self, data, context):
+        if 'size' not in context:
+            return {'color': 'black', 'label': self.column}
+        si, s = context['size']
+        cs, subject = context['subject']
+        style = self.style_for_size_and_subject(s, subject)
+        return style
 
     @property
     def subjects(self):
