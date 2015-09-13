@@ -17,12 +17,18 @@ def filter_size(df, size):
 def filter_fg_range(df, fg):
     return df[(-fg <= df.fg) & (df.fg <= +fg)]
 
+def filter_fg_sign(df, sign):
+    if sign not in ['+', '-']:
+        raise ValueError("Sign must be + or -")
+    return df[(df.fg > 0 if sign == '+' else df.fg < 0)]
+
 def main():
     parser = argparse.ArgumentParser(description='CT analysis - Filter')
     parser.add_argument('data', nargs='+', type=str, default=['-'])
     parser.add_argument('--size', default=None)
     parser.add_argument('--no-control', action='store_true', default=False, dest='ctrl')
     parser.add_argument('--fg', dest='fg', type=float, default=None)
+    parser.add_argument('--fg-sign', dest='fg_sign', default=None)
     args = parser.parse_args()
 
     df = read_data(args.data)
@@ -35,6 +41,9 @@ def main():
 
     if args.fg:
         df = filter_fg_range(df, args.fg)
+
+    if args.fg_sign:
+        df = filter_fg_sign(df, args.fg_sign)
 
     df.to_csv(sys.stdout, index=False)
 
