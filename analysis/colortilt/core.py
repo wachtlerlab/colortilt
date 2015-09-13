@@ -85,6 +85,9 @@ class GroupedContext(object):
         idx = self.gd.groups.index(item)
         return self.indices[idx], self.group[idx]
 
+    def __contains__(self, item):
+        return item in self.gd.groups
+
 
 class GroupedData(object):
     def __init__(self, data_frame, groups):
