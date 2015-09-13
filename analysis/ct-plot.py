@@ -379,7 +379,7 @@ def plot_sizerel_combined(df, cargs):
     labels = [u'0.5°', u'2°', u'8°']
     plt.xticks(x, labels)
     plt.ylabel('induced hue shift [deg]')
-    plt.ylim([0, y_max])
+    #plt.ylim([0, y_max])
     plt.legend()
 
     setattr(fig, 'name', 'sizerel')
