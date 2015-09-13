@@ -33,6 +33,9 @@ def rel2abs(df, args):
         df = pd.concat([df, upper, lower], ignore_index=True)
     return df
 
+def abs_shift(df, args):
+    df['shift'] = np.abs(df['shift'])
+    return df
 
 def main():
     parser = argparse.ArgumentParser(description='CT analysis - Filter')
@@ -42,6 +45,10 @@ def main():
     sp_r2a = subparsers.add_parser('rel2abs', help='a help')
     sp_r2a.add_argument('--no-extend', action='store_false', default=True, dest='extend')
     sp_r2a.set_defaults(dispatch=rel2abs)
+
+    as_r2a = subparsers.add_parser('abs-shift', help='a help')
+    as_r2a.set_defaults(dispatch=abs_shift)
+
     args = parser.parse_args()
 
     df = read_data(args.data)
