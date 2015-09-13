@@ -36,7 +36,6 @@ def calc_sizerel_avg(df, cargs):
     return x
 
 def make_m_mean(x):
-    x = x[(-67.5 <= x.fg) & (x.fg <= 67.5)]
     idx = x['shift'].abs().idxmax()
     data = [x.loc[idx]]
     fg = data[0].fg
@@ -47,15 +46,14 @@ def make_m_mean(x):
 
 
 def calc_sizerel(df, cargs):
-    #x = df[df.fg >= -67.5].append(df[df.fg <= 67.5], ignore_index=True)
     grouped = df.groupby(['bg', 'size'])
     x = grouped.apply(make_m_mean)
     x.reset_index()
     return x
 
 def main():
-    parser = argparse.ArgumentParser(description='CT - Analysis')
-    parser.add_argument('data', nargs='+', type=str, default=['-'])
+    parser = argparse.ArgumentParser(description='CT - Analysis [SizeRel]')
+    parser.add_argument('--data', type=str, default=['-'])
     parser.add_argument('--mean', action='store_true', default=False)
     args = parser.parse_args()
 
@@ -63,8 +61,10 @@ def main():
     df = df[df.bg != -1]
 
     subjects = df['subject'].unique()
-    have_avg = len(subjects) == 1 and '_' not in subjects
+    have_avg = len(subjects) == 1 and '_' in subjects[0]
+
     if have_avg:
+        print('[I] sizerel: using average method!', file=sys.stderr)
         x = calc_sizerel_avg(df, args)
     else:
         x = calc_sizerel(df, args)
