@@ -32,7 +32,7 @@ def convert2sizerel(x, df):
 
 def main():
     parser = argparse.ArgumentParser(description='CT - Analysis')
-    parser.add_argument('--data', type=str, default='-')
+    parser.add_argument('data', type=str, nargs='?', default='-')
     parser.add_argument('--sizerel', default=False, action='store_true')
 
     args = parser.parse_args()

@@ -118,7 +118,7 @@ def show_detail(df, stats=None, missing_only=True):
 def main():
     global do_debug
     parser = argparse.ArgumentParser(description='CT - Analysis')
-    parser.add_argument('data', nargs='+', type=str, default=['-'])
+    parser.add_argument('data', nargs='?', type=str, default='-')
     parser.add_argument('--debug', action="store_true", default=False)
     parser.add_argument('--full', action="store_true", default=False)
     parser.add_argument('--subjects', action="store_true", default=False)
@@ -126,7 +126,7 @@ def main():
 
     do_debug = args.debug
 
-    df = read_data(args.data)
+    df = read_data([args.data])
     df = df[df.bg != -1]
 
     if args.subjects:

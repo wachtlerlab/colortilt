@@ -24,14 +24,14 @@ def filter_fg_sign(df, sign):
 
 def main():
     parser = argparse.ArgumentParser(description='CT analysis - Filter')
-    parser.add_argument('data', nargs='+', type=str, default=['-'])
+    parser.add_argument('data', nargs='?', type=str, default='-')
     parser.add_argument('--size', default=None)
     parser.add_argument('--no-control', action='store_true', default=False, dest='ctrl')
     parser.add_argument('--fg', dest='fg', type=float, default=None)
     parser.add_argument('--fg-sign', dest='fg_sign', default=None)
     args = parser.parse_args()
 
-    df = read_data(args.data)
+    df = read_data([args.data])
 
     if args.size is not None:
         df = filter_size(df, args.size)

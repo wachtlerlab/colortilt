@@ -24,10 +24,10 @@ def calc_delta(a):
 
 def main():
     parser = argparse.ArgumentParser(description='CT - Analysis')
-    parser.add_argument('data', nargs='+', type=str, default=['-'])
+    parser.add_argument('data', nargs='?', type=str, default='-')
     args = parser.parse_args()
 
-    df = read_data(args.data)
+    df = read_data([args.data])
     df = df[df.bg != -1]
     dfg = df.groupby(['bg', 'fg'])
     x = dfg.apply(calc_delta)

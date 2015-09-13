@@ -399,7 +399,7 @@ def plot_sizerel_combined(df, cargs):
 
 def main():
     parser = argparse.ArgumentParser(description='CT - Analysis')
-    parser.add_argument('data', type=str, nargs='+', default='-')
+    parser.add_argument('data', type=str, nargs='?', default='-')
     parser.add_argument('--single', action='store_true', default=False)
     parser.add_argument('--style', nargs='*', type=str, default=['ck'])
     parser.add_argument('--color', default='seq_bmr', type=str)
@@ -412,9 +412,10 @@ def main():
     parser.add_argument('-W, --width', dest='width', type=float, default=24.7)
     parser.add_argument('-U, --unit', dest='unit', type=str, default='cm')
     parser.add_argument('-P' '--path', dest='path', type=str, default=None)
+    parser.add_argument('-F, --filename', dest='filename', type=str, default=None)
     args = parser.parse_args()
 
-    df = read_data(args.data)
+    df = read_data([args.data])
     print(df, file=sys.stderr)
 
     plt.style.use(args.style)
@@ -447,7 +448,8 @@ def main():
 
     if args.save:
         for f in fig:
-            ggsave(plot=f, path=args.path, width=args.width, height=args.height, units=args.unit)
+            ggsave(plot=f, filename=args.filename, path=args.path,
+                   width=args.width, height=args.height, units=args.unit)
     else:
         plt.show()
 
