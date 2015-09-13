@@ -207,10 +207,6 @@ class CompareShiftPlotter(ShiftPlotter):
         plt.errorbar(x['fg'], x['shift'], yerr=x['err'], label=lbl, color=color)
         plt.errorbar(df['fg'], df['oshift'], yerr=df['oerr'], label=lbl + '-old', color='k')
 
-def plot_shifts_cmpold(df, cargs):
-    plotter = CompareShiftPlotter(df, cargs)
-    return plotter()
-
 
 def plot_shifts_individual(df, cargs):
     gd = GroupedData(df, ['subject', 'size', 'date', 'side', 'bg'])
@@ -419,7 +415,8 @@ def main():
     if 'shift' in df.columns and 'N' not in df.columns:
         fig = plot_shifts_individual(df, args)
     elif 'oshift' in df.columns:
-        fig = plot_shifts_cmpold(df, args)
+        plotter = CompareShiftPlotter(df, args)
+        fig = plotter()
     elif 'shift' in df.columns:
         plotter = ShiftPlotter.make(df, args)
         fig = plotter()
