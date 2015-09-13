@@ -116,6 +116,7 @@ class ShiftPlotter(Plotter):
         self.ylim = cargs.ylim or np.max(np.abs(df[column])) * 1.05
         self.is_absolute = any(np.unique(df.fg) > 180.0)
         self.have_negative = any(np.unique(df[self.column]) < 0)
+        self.legend = cargs.legend
 
     @staticmethod
     def make(df, cargs, column='shift'):
@@ -155,7 +156,7 @@ class ShiftPlotter(Plotter):
             style = self.get_style(data, context)
             self.plot_data(data, context.group, ax, style)
 
-            if bg == 0:
+            if self.legend and bg == 0:
                 location = 1 if self.is_vertical else 4
                 plt.legend(loc=location, fontsize=12)
 
@@ -403,7 +404,7 @@ def main():
     parser.add_argument('--style', nargs='*', type=str, default=['ck'])
     parser.add_argument('--color', default='seq_bmr', type=str)
     parser.add_argument('-S, --save', dest='save', default=False, action='store_true')
-    parser.add_argument('--legend', dest='legend', action='store_true', default=False)
+    parser.add_argument('--no-legend', dest='legend', action='store_false', default=True)
     parser.add_argument('--no-title', dest='no_title', action='store_true', default=False)
     parser.add_argument('--ylim', default=None, type=float)
     parser.add_argument('--vertical', default=False, action='store_true')
