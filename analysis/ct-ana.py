@@ -33,6 +33,7 @@ def main():
     parser.add_argument('data', type=str)
     parser.add_argument('--combine', action='store_true', default=False)
     parser.add_argument('--col', type=str, default='shift')
+    parser.add_argument('--mean', action='store_true', default=False)
     args = parser.parse_args()
 
     df = read_data([args.data])
@@ -42,13 +43,19 @@ def main():
     if args.combine:
         groups.remove('subject')
 
-    gpd = df[['bg', 'fg', 'size', args.col, 'subject']].groupby(groups, as_index=False)
+    if args.mean:
+        groups.remove('size')
+
+    gpd = df.groupby(groups, as_index=False)
     dfg = gpd.apply(make_calc_stats(args.col))
     x = dfg.reset_index()
 
     if args.combine:
         subs = df['subject'].unique()
         x['subject'] = '_'.join(map(lambda x: x[:2],  subs)) if len(subs) > 1 else subs[0]
+
+    if args.mean:
+        x['size'] = 40 #FIXME
 
     x.to_csv(sys.stdout, index=False)
 
