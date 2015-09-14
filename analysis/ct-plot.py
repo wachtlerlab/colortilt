@@ -205,7 +205,7 @@ class CompareShiftPlotter(ShiftPlotter):
             name +=  " " + str(bg)
         plt.suptitle(name)
         setattr(fig, 'name', name)
-        super(ShiftPlotter, self).setup_subplot(ax, fig, bg, idx)
+        super(CompareShiftPlotter, self).setup_subplot(ax, fig, bg, idx)
 
     def plot_data(self, df, grp, ax, style):
         x = df[np.isfinite(df['shift'])]
