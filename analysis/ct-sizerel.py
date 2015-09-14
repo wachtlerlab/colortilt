@@ -41,7 +41,7 @@ def make_m_mean(x):
     fg = data[0].fg
     xk = x[x.fg == fg]
     m_mean = xk['shift'].abs().mean()
-    m_merr = xk['shift'].sem()
+    m_merr = xk['shift'].abs().sem()
     return pd.Series({'m_mean': m_mean, 'm_merr': m_merr})
 
 
