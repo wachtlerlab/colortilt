@@ -40,8 +40,8 @@ make_shift_plots
 
 echo "[p] sizerel"
 ./ct-load.py "$EXPFILE" | ./ct-ana.py | ./ct-sizerel.py | ./ct-plot.py -S -P "$DIR" -W 20 -H 32 2>> log.tmp
-./ct-load.py "$EXPFILE" | ./ct-filter.py --fg-sign='-' | ./ct-ana.py | ./ct-sizerel.py | ./ct-plot.py -F 'sizerel-pos.pdf' -S -P "$DIR" -W 20 -H 32 2>> log.tmp
-./ct-load.py "$EXPFILE" | ./ct-filter.py --fg-sign='+' | ./ct-ana.py | ./ct-sizerel.py | ./ct-plot.py -S 'sizerel-neg.pdf' -P "$DIR" -W 20 -H 32 2>> log.tmp
+./ct-load.py "$EXPFILE" | ./ct-filter.py --fg-sign='+' | ./ct-ana.py | ./ct-sizerel.py | ./ct-plot.py -F 'sizerel-pos.pdf' -S -P "$DIR" -W 20 -H 32 2>> log.tmp
+./ct-load.py "$EXPFILE" | ./ct-filter.py --fg-sign='-' | ./ct-ana.py | ./ct-sizerel.py | ./ct-plot.py -F 'sizerel-neg.pdf' -S -P "$DIR" -W 20 -H 32 2>> log.tmp
 
 echo "[p] spread-sizrel:"
 ./ct-load.py "$EXPFILE" | ./ct-filter.py --no-control | ./ct-ana.py -C | ./ct-spread.py --sizerel | ./ct-plot.py -F "sizerel-spread.pdf" -S -P "$DIR" -W 20 -H 32 2>> log.tmp
