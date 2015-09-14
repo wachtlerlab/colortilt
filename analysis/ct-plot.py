@@ -246,6 +246,29 @@ def plot_shifts_individual(df, cargs):
                     fontsize=18, family='Input Mono', color=angles_to_color([bg])[0])
     return [fig]
 
+def plot_shifts_bgavg(df, args):
+    plotter = Plotter(args, 1, 1)
+    ax, fig = plotter.subplot(1)
+
+    ylim = args.ylim or np.max(np.abs(df['shift'])) * 1.05
+    is_absolute = any(np.unique(df.fg) > 180.0)
+
+    gd = GroupedData(df, ['size', 'subject'])
+    for data, context in gd.data:
+        si, size = context['size']
+        color = color_for_size(size, style=args.color)
+        plt.errorbar(x=data['fg'], y=data['shift'], yerr=data['err'], color=color, label=size_to_label(size))
+        plt.ylim([-1*ylim, ylim])
+
+    plt.legend(loc=4, fontsize=12)
+    name = 'shift_avg'
+    if is_absolute:
+        name += '_abs'
+    name += ": " + make_subject_string(df.subject.unique())
+    plt.suptitle(name)
+    setattr(fig, 'name', name)
+
+    return plotter.figures
 
 def plot_delta(df, cargs):
     dfc_group = df.groupby(['bg', 'sign'])
@@ -422,6 +445,8 @@ def main():
 
     if 'shift' in df.columns and 'N' not in df.columns:
         fig = plot_shifts_individual(df, args)
+    if 'shift' in df.columns and 'bg' not in df.columns:
+        fig = plot_shifts_bgavg(df, args)
     elif 'oshift' in df.columns:
         plotter = CompareShiftPlotter(df, args)
         fig = plotter()
