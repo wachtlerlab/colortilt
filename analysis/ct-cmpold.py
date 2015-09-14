@@ -12,11 +12,11 @@ def main():
     parser = argparse.ArgumentParser(description='CT - Analysis')
     parser.add_argument('subject', type=str)
     parser.add_argument('olddata', type=str)
-    parser.add_argument('data', nargs='+', type=str, default=['-'])
+    parser.add_argument('data', nargs='?', type=str, default='-')
     parser.add_argument('--inner', action='store_true', default=False)
 
     args = parser.parse_args()
-    df = read_data(args.data)
+    df = read_data([args.data])
 
     if args.subject not in df.subject.unique():
         print('Subject not in new data!', file=sys.stderr)
