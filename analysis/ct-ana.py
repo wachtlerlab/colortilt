@@ -44,7 +44,7 @@ def main():
         groups.remove('subject')
 
     if args.mean:
-        groups.remove('size')
+        groups.remove('bg')
 
     gpd = df.groupby(groups, as_index=False)
     dfg = gpd.apply(make_calc_stats(args.col))
