@@ -445,7 +445,7 @@ def main():
 
     if 'shift' in df.columns and 'N' not in df.columns:
         fig = plot_shifts_individual(df, args)
-    if 'shift' in df.columns and 'bg' not in df.columns:
+    elif 'shift' in df.columns and 'bg' not in df.columns:
         fig = plot_shifts_bgavg(df, args)
     elif 'oshift' in df.columns:
         plotter = CompareShiftPlotter(df, args)
