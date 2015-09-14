@@ -7,6 +7,23 @@ import argparse
 import sys
 
 from colortilt.io import read_data
+from scipy import stats
+
+
+def chi_squared_two_curves(row):
+    print(row, file=sys.stderr)
+    d2 = (row['shift'] - row['oshift'])**2
+    e2 = row['shift']**2 + row['oerr']**2
+    r = d2 / e2
+    chi2 = sum(r)
+    return pd.Series({'chi2': chi2,
+                      'dof': len(row)})
+
+def test_significance(df):
+    gd = df.groupby(['size', 'bg'])
+    chi2 = gd.apply(chi_squared_two_curves)
+    chi2.reset_index(inplace=True)
+    chi2.to_csv(sys.stdout, index=False)
 
 def main():
     parser = argparse.ArgumentParser(description='CT - Analysis')
@@ -14,6 +31,7 @@ def main():
     parser.add_argument('olddata', type=str)
     parser.add_argument('data', nargs='?', type=str, default='-')
     parser.add_argument('--inner', action='store_true', default=False)
+    parser.add_argument('--chi2', action='store_true', default=False)
 
     args = parser.parse_args()
     df = read_data([args.data])
@@ -33,13 +51,17 @@ def main():
     dfo = old_df.set_index(['size', 'bg', 'fg'])
 
     kwargs = {}
-    if args.inner:
+    if args.chi2 or args.inner:
         kwargs['join'] = 'inner'
 
     dfa = pd.concat([dfi, dfo], axis=1, **kwargs)
     x = dfa.reset_index()
     x.subject = args.subject
-    x.to_csv(sys.stdout, index=False)
+
+    if args.chi2:
+        test_significance(x)
+    else:
+        x.to_csv(sys.stdout, index=False)
 
 
 if __name__ == "__main__":
