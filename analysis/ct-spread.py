@@ -22,6 +22,7 @@ def convert2sizerel(x, df):
     idx = ['bg', 'fg', 'subject']
     gx = x.groupby(['bg', 'subject'])
     smax = x.ix[gx.spread.idxmax()][['bg', 'fg', 'subject']]
+    smax[['bg', 'fg']].to_csv(sys.stderr, index=False)
     df.set_index(idx, inplace=True)
     sizerel = df.ix[[tuple(x) for x in smax.to_records(index=False)]].copy()
     #print(sizerel, file=sys.stderr)
