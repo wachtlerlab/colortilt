@@ -160,7 +160,7 @@ class ShiftPlotter(Plotter):
 
             if self.legend and bg == 0:
                 location = 1 if self.is_vertical else 4
-                plt.legend(loc=location, fontsize=12)
+                plt.legend(loc=location, fontsize=10, fancybox=True, framealpha=0.5)
 
         return self.figures
 
@@ -223,8 +223,8 @@ class CompareShiftPlotter(ShiftPlotter):
         lbl = style['label']
         style['linewidht'] = 1.5
         color = color_for_size(40)
-        plt.errorbar(x['fg'], x['shift'], yerr=x['err'], label=lbl, color=color)
-        plt.errorbar(df['fg'], df['oshift'], yerr=df['oerr'], label=lbl + '-old', color='k')
+        plt.errorbar(x['fg'], x['shift'], yerr=x['err'], label='Kellner & Wachtler 2016', color=color)
+        plt.errorbar(df['fg'], df['oshift'], yerr=df['oerr'], label='Klauke & Wachtler 2015', color='k')
 
 
 def plot_shifts_individual(df, cargs):
