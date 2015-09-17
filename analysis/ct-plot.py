@@ -85,6 +85,7 @@ class Plotter(object):
 
         if (ax, fig) not in self.__ax_cache:
             self.setup_subplot(ax, fig, k, idx)
+            self.__ax_cache[(ax, fig)] = k
         return ax, fig
 
     def setup_subplot(self, ax, fig, k, idx):
