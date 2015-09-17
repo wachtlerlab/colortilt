@@ -210,13 +210,18 @@ class CompareShiftPlotter(ShiftPlotter):
         name = "compare: " + self.gd.unique('subject')[0]
         if self.single:
             name +=  " " + str(bg)
-        plt.suptitle(name)
+
+        if not self.cargs.no_title:
+            plt.suptitle(name)
         setattr(fig, 'name', name)
         super(CompareShiftPlotter, self).setup_subplot(ax, fig, bg, idx)
+        plt.xlabel("Stimulus hue relative to surround [deg]", fontsize=11)
+        plt.ylabel("Induced hue changes [deg]", fontsize=11)
 
     def plot_data(self, df, grp, ax, style):
         x = df[np.isfinite(df['shift'])]
         lbl = style['label']
+        style['linewidht'] = 1.5
         color = color_for_size(40)
         plt.errorbar(x['fg'], x['shift'], yerr=x['err'], label=lbl, color=color)
         plt.errorbar(df['fg'], df['oshift'], yerr=df['oerr'], label=lbl + '-old', color='k')
