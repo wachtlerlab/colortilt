@@ -17,7 +17,7 @@ def make_calc_stats(key):
         data = col[key]
         clean = filter(lambda x: np.isfinite(x), data)
         shift = np.mean(clean)
-        err = stats.sem(clean, ddof=0)
+        err = stats.sem(clean, ddof=1)
 
         return pd.Series({key: shift,
                           'err': err,
