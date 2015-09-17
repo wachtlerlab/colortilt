@@ -179,15 +179,18 @@ class ShiftPlotter(Plotter):
     def style_for_size_and_subject(self, size, subject):
         n_subjects = len(self.subjects)
         color = color_for_size(size, style=self.cargs.color)
+        cur_subject = self.subjects.index(subject)
+        label = size_to_label(size) if cur_subject == 0 else "_" + subject
+
         if n_subjects > 1:
-            cur_subject = self.subjects.index(subject)
             hsv = rgb_to_hsv(color[:3])
-            hsv[1] = (1.0-(cur_subject/n_subjects))*0.6+0.2
+            idx_subject = (cur_subject/n_subjects)
+            hsv[1] = (1.0-idx_subject)*0.6+0.2
             color = hsv_to_rgb(hsv)
 
-        style = {'color': color}
-        sstr = size_to_label(size)
-        style['label'] = sstr if len(self.subjects) == 1 else sstr + ' ' + subject[:2]
+
+
+        style = {'color': color, 'label': label}
         return style
 
     def plot_data(self, df, grp, ax, style):
