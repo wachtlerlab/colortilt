@@ -5,24 +5,29 @@ from __future__ import division
 import pandas as pd
 import argparse
 import sys
+import numpy as np
 
 from colortilt.io import read_data
 from scipy import stats
 
 
 def chi_squared_two_curves(row):
-    print(row, file=sys.stderr)
     d2 = (row['shift'] - row['oshift'])**2
-    e2 = row['shift']**2 + row['oerr']**2
+    e2 = row['err']**2 + row['oerr']**2
     r = d2 / e2
     chi2 = sum(r)
-    return pd.Series({'chi2': chi2,
-                      'dof': len(row)})
+    dof = len(row)
+    p = 1.0 - stats.chi2.cdf(chi2, dof)
+    return pd.Series({'chi2': np.round(chi2, 3),
+                      'p': np.round(p, 3),
+                      'dof': dof})
 
-def test_significance(df):
+def test_significance(df, alpha=0.01):
     gd = df.groupby(['size', 'bg'])
     chi2 = gd.apply(chi_squared_two_curves)
     chi2.reset_index(inplace=True)
+    del chi2['size']
+    chi2['sig'] = chi2['p'] < alpha
     chi2.to_csv(sys.stdout, index=False)
 
 def main():
@@ -32,6 +37,7 @@ def main():
     parser.add_argument('data', nargs='?', type=str, default='-')
     parser.add_argument('--inner', action='store_true', default=False)
     parser.add_argument('--chi2', action='store_true', default=False)
+    parser.add_argument('--alpha', type=float, default=0.01)
 
     args = parser.parse_args()
     df = read_data([args.data])
@@ -59,7 +65,7 @@ def main():
     x.subject = args.subject
 
     if args.chi2:
-        test_significance(x)
+        test_significance(x, alpha=args.alpha)
     else:
         x.to_csv(sys.stdout, index=False)
 
