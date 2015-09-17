@@ -432,6 +432,20 @@ def plot_sizerel_combined(df, cargs):
     return [fig]
 
 
+def plot_spread_polar(df, args):
+    plotter = Plotter(args, 1, 1)
+    df = df[df.bg != -1] # filter out control
+    df.sort(['bg'], inplace=True)
+    ax, fig = plotter.subplot(1, polar=True)
+    bgs = df['bg']
+    colors = angles_to_color(bgs)
+    plt.scatter(map(lambda x: x/180.0*np.pi, bgs), df['spread'], c=colors, s=40, marker='o')
+    ax.set_rmax(args.ylim or df['spread'].max())
+    sstr = make_subject_string(df['subject'].unique())
+    setattr(fig, 'name', 'spread_polar_' + sstr)
+    return plotter.figures
+
+
 def main():
     parser = argparse.ArgumentParser(description='CT - Analysis')
     parser.add_argument('data', type=str, nargs='?', default='-')
@@ -477,9 +491,11 @@ def main():
     elif 'szdiff' in df.columns:
         plotter = ShiftPlotter.make(df, args, column='szdiff')
         fig = plotter()
-    elif 'spread' in df.columns:
+    elif 'spread' in df.columns and 'size' in df.columns:
         plotter = ShiftPlotter.make(df, args, column='spread')
         fig = plotter()
+    elif 'spread' in df.columns:
+        fig = plot_spread_polar(df, args)
     else:
         raise ValueError('Unknown data set')
 
