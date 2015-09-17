@@ -198,7 +198,9 @@ class ShiftPlotter(Plotter):
             plt.errorbar(df['fg'], df[self.column], yerr=df['err'], **style)
         else:
             plt.plot(df['fg'], df[self.column], **style)
-
+        if self.cargs.single:
+            plt.xlabel("Stimulus hue relative to surround [deg]", fontsize=10)
+            plt.ylabel("Induced hue changes [deg]", fontsize=10)
 
 class CompareShiftPlotter(ShiftPlotter):
     def __init__(self, df, cargs):
