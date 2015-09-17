@@ -103,7 +103,7 @@ class ShiftPlotter(Plotter):
         m, n = 3, 3
         idx_map = ShiftPlotter.bg2idx_map
 
-        if self.is_vertical:
+        if self.is_vertical or cargs.single:
             bgs = np.unique(df.bg)
             n, m = 1, len(bgs)
             idx_map = {fg: idx+1 for idx, fg in enumerate(bgs)}
@@ -144,8 +144,9 @@ class ShiftPlotter(Plotter):
             if self.single:
                 name +=  " " + str(bg)
 
-            plt.suptitle(name)
             setattr(fig, 'name', name)
+            if not self.cargs.no_title:
+                plt.suptitle(name)
 
     def __call__(self):
 
