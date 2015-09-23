@@ -452,10 +452,31 @@ def plot_spread_polar(df, args):
     ax, fig = plotter.subplot(1, polar=True)
     bgs = df['bg']
     colors = angles_to_color(bgs)
-    plt.scatter(map(lambda x: x/180.0*np.pi, bgs), df['spread'], c=colors, s=40, marker='o')
-    ax.set_rmax(args.ylim or df['spread'].max())
+    theta = np.array(map(lambda x: x/180.0*np.pi, bgs))
+    rho = np.array(df['spread'])
+    x, y = pol2cart(theta, rho)
+    plt.hold(True)
+    try:
+        from colortilt.ellipse import fit_ellipse, get_parameters, create_ellipse
+        a = fit_ellipse(x, y)
+        rf, xcf, alpha_f = get_parameters(a)
+        el = create_ellipse(rf,xcf,alpha_f)
+        tl, rl = cart2pol(el[:, 0], el[:, 1])
+        alpha_deg = alpha_f/np.pi*180.0
+        print(u"α: %f = %f°" % (alpha_f, alpha_deg))
+        plt.plot(tl, rl, label=u"fitted ellipse (α: %.1f°)" % alpha_deg, color='#111111')
+    except ImportError:
+        rl = 0
+        print('No ellipse fitting, code missing', file=sys.stderr)
+
+    plt.scatter(theta, rho, c=colors, s=50, marker='o', label='surround hue')
+
+    ax.set_rmax(args.ylim or np.max([np.max(rl), np.max(rho)])*1.05)
     sstr = make_subject_string(df['subject'].unique())
     setattr(fig, 'name', 'spread_polar_' + sstr)
+    plt.legend(framealpha=0.5, scatterpoints=8)
+    return plotter.figures
+
 def scatter_spread(df, args):
     plotter = Plotter(args, 1, 1)
     df = df[df.bg != -1] # filter out control
