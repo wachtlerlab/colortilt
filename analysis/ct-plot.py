@@ -433,6 +433,17 @@ def plot_sizerel_combined(df, cargs):
 
     return [fig]
 
+def cart2pol(x, y):
+    theta = np.arctan2(y, x)
+    rho = np.hypot(x, y)
+    return theta, rho
+
+
+def pol2cart(theta, rho):
+    x = rho * np.cos(theta)
+    y = rho * np.sin(theta)
+    return x, y
+
 
 def plot_spread_polar(df, args):
     plotter = Plotter(args, 1, 1)
