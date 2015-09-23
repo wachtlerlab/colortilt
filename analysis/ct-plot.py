@@ -420,14 +420,14 @@ def plot_sizerel_combined(df, cargs):
         x = 2*np.arctan2(arr['size'], 2.0*1145.0)/np.pi*180.0
         x = np.log2(x)
         plt.errorbar(x, arr['m_mean'], yerr=arr['m_merr'], color=colors[idx])
-        plt.scatter(x, arr['m_mean'], color=colors[idx], marker='.', s=140, label=u'%03s°' % str(int(bg)))
-        plt.xlabel('stimulus size [deg]')
+        plt.scatter(x, arr['m_mean'], color=colors[idx], marker='.', s=140, label=u'%s°' % str(int(bg)))
+        plt.xlabel('Stimulus size [deg]', fontsize=10)
 
-    labels = [u'0.5°', u'2°', u'8°']
+    labels = [size_to_label(s) for s in sorted(df['size'].unique())]
     plt.xticks(x, labels)
-    plt.ylabel('induced hue shift [deg]')
+    plt.ylabel('Induced hue shift [deg]', fontsize=10)
     #plt.ylim([0, y_max])
-    plt.legend()
+    legend = plt.legend(fontsize=10, fancybox=True, framealpha=0.5, scatterpoints=1)
 
     setattr(fig, 'name', 'sizerel')
 
