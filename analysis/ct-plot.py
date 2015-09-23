@@ -445,6 +445,22 @@ def plot_spread_polar(df, args):
     ax.set_rmax(args.ylim or df['spread'].max())
     sstr = make_subject_string(df['subject'].unique())
     setattr(fig, 'name', 'spread_polar_' + sstr)
+def scatter_spread(df, args):
+    plotter = Plotter(args, 1, 1)
+    df = df[df.bg != -1] # filter out control
+    df.sort(['bg'], inplace=True)
+    colors = angles_to_color(df['bg'])
+    ax, fig = plotter.subplot(1, polar=False)
+    x, y = df['ref'], df['spread']
+
+    p = np.polyfit(x, y, 1)
+    px = np.arange(-5, np.max(np.abs(x))*1.2, 0.5)
+    py = np.polyval(p, px)
+    plt.plot(px, py, label='fit', color="#999999")
+    plt.hold(True)
+    plt.scatter(x, y, c=colors, s=50, marker='o')
+    plt.xlabel('induction @ ' + size_to_label(40))
+    plt.ylabel('max spread')
     return plotter.figures
 
 
