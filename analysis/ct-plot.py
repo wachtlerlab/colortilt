@@ -248,8 +248,8 @@ def plot_shifts_individual(df, cargs):
         plt.axvline(x=0, color='#777777')
         date = str(np.unique(data['date']))
         side = str(np.unique(data['side']))
-        x = data.sort(['fg_rel'])
-        plt.plot(x['fg_rel'], x['shift'], label="%s %s" % (date, side))
+        x = data.sort(['fg'])
+        plt.plot(x['fg'], x['shift'], label="%s %s" % (date, side))
         plt.xlim([-180, 180])
         plt.ylim([-1*max_shift, max_shift])
         if pos_idx[bg] in [3, 6]:
