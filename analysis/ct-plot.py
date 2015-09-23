@@ -89,6 +89,8 @@ class Plotter(object):
         return ax, fig
 
     def setup_subplot(self, ax, fig, k, idx):
+        if ax.axes.name == 'polar':
+            return
         ax.axhline(y=0, color='#777777')
         ax.axvline(x=0, color='#777777')
 
