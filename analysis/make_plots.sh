@@ -57,6 +57,7 @@ echo "[p] old vs. new"
 echo "[p] paper figures"
 ./ct-load.py "$EXPFILE" | ./ct-ana.py | ./ct-filter.py -B 0.0 | ./ct-plot.py --ylim 35 --single --no-title -S -W 16 -H 12 -P "$DIR" -F shift_all_single_0.pdf 2>> log.tmp
 ./ct-load.py "$EXPFILE" twachtler | ./ct-ana.py | ./ct-cmpold.py --inner twachtler allmatchesTW.csv | ./ct-filter.py -B 0.0 | ./ct-plot.py --ylim 35 --single --no-title -S -P "$DIR" -F twctcmp.pdf -W 16 -H 12 2>> log.tmp
+./ct-load.py $EXPFILE | ./ct-ana.py -C | ./ct-plot.py -W 5.75 -H 4 -S -U in --ylim 30 --no-title -P "$DIR"  -F shift_all.pdf  2>> log.tmp
 
 echo "Plots:"
 ls "$DIR"
