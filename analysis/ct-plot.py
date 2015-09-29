@@ -478,6 +478,8 @@ def plot_spread_polar(df, args):
     return plotter.figures
 
 def scatter_spread(df, args):
+    from scipy import stats
+
     plotter = Plotter(args, 1, 1)
     df = df[df.bg != -1] # filter out control
     df.sort(['bg'], inplace=True)
@@ -485,6 +487,8 @@ def scatter_spread(df, args):
     ax, fig = plotter.subplot(1, polar=False)
     x, y = df['ref'], df['spread']
 
+    slope, intercept, r_value, p_value, std_err = stats.linregress(x,y)
+    print(p_value, r_value)
     p = np.polyfit(x, y, 1)
     px = np.arange(-5, np.max(np.abs(x))*1.2, 0.5)
     py = np.polyval(p, px)
