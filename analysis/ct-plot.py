@@ -46,7 +46,7 @@ def make_subject_string(subjects):
 
 def size_to_label(size):
     size_map = {
-        '10': u'½°',
+        '10': u'0.5°',
         '40': u'2°',
         '160': u'8°'
     }
