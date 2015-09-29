@@ -10,7 +10,7 @@ import sys
 from colortilt.io import read_data
 
 
-def calc_max_spread(row):
+def calc_spread(row):
     upper = np.max(row['shift'])
     lower = np.min(row['shift'])
     idx_upper = row['shift'].idxmax()
@@ -46,21 +46,26 @@ def convert2sizerel(x, df):
     return sizerel
 
 
-def calc_delta_scat(a):
-    x_40 = np.mean(a.loc[a['size'] == 40.0]['m_mean'].values)
-    upper = np.max(a['m_mean'])
-    return pd.Series({'ref': upper})
+def calc_delta_scat(reference):
+    def do_calc(a):
+        if reference == '40':
+            ref = np.mean(a.loc[a['size'] == 40.0]['m_mean'].values)
+        else:
+            ref = np.max(a['m_mean'])
+        return pd.Series({'ref': ref})
+    return do_calc
 
 
-def spread_slrel(x, df):
+def spread_slrel(x, df, ref):
     idx = ['bg', 'fg', 'subject']
     data = convert2sizerel(x, df)
     data.reset_index(inplace=True)
     gd = data.groupby(['bg', 'fg', 'subject'])
-    scat = gd.apply(calc_delta_scat)
+    scat = gd.apply(calc_delta_scat(ref))
     data.set_index(idx, inplace=True)
     data['ref'] = scat
     data['m_mean'] = data['m_mean'] / data['ref']
+    del data['m_merr']
     print(data, file=sys.stderr)
     data.reset_index(inplace=True)
     return data
@@ -71,13 +76,13 @@ def main():
     parser.add_argument('data', type=str, nargs='?', default='-')
     parser.add_argument('--sizerel', default=False, action='store_true')
     parser.add_argument('--max-spread', dest='maxspread', default=False, action='store_true')
-    parser.add_argument('--sl-rel', dest='slrel', default=False, action='store_true')
+    parser.add_argument('--sl-rel', dest='slrel', choices={'40', 'upper'}, default=None)
 
     args = parser.parse_args()
     df = read_data([args.data])
 
     gd = df.groupby(['bg', 'fg', 'subject'])
-    x = gd.apply(calc_max_spread)
+    x = gd.apply(calc_spread)
     x.reset_index(inplace=True)
 
     if args.sizerel:
@@ -87,7 +92,7 @@ def main():
         x = max_spread(x)
         x.to_csv(sys.stdout, index=False)
     elif args.slrel:
-        x = spread_slrel(x, df)
+        x = spread_slrel(x, df, args.slrel)
         x.to_csv(sys.stdout, index=False)
     else:
         x.to_csv(sys.stdout, index=False)
