@@ -19,7 +19,12 @@ def calc_max_spread(row):
     size_lower = row.ix[idx_lower]['size']
     ref = np.mean(row.ix[row['size'] == 40]['shift'].values)
     delta = upper - lower
-    return pd.Series({'spread': delta, 'upper': size_upper, 'lower': size_lower, 'ref': ref})
+    return pd.Series({'spread': delta,
+                      'size_upper': size_upper,
+                      'size_lower': size_lower,
+                      'upper': upper,
+                      'lower': lower,
+                      'ref': ref})
 
 
 def max_spread(df):
