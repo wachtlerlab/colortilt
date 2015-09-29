@@ -554,7 +554,7 @@ def main():
     elif 'szdiff' in df.columns:
         plotter = ShiftPlotter.make(df, args, column='szdiff')
         fig = plotter()
-    elif 'spread' in df.columns and (len(df) != 9):
+    elif 'spread' in df.columns and (len(df) > 10):
         plotter = ShiftPlotter.make(df, args, column='spread')
         fig = plotter()
     elif 'spread' in df.columns:
