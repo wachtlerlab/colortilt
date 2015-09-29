@@ -132,9 +132,11 @@ class ShiftPlotter(Plotter):
         plt.xlim([-180, 180] if not is_abs else [0, 360])
         plt.ylim([-1*self.ylim if self.have_negative else 0, self.ylim])
         color = angles_to_color([bg])[0]
-        ax.annotate(u"%4d°" % int(bg), xy=(.05, .95),  xycoords='axes fraction',
+        bgstr = u"%d°" % int(bg) if bg != -1 else "control"
+        ax.annotate(bgstr, xy=(.05, .935),  xycoords='axes fraction',
                     horizontalalignment='left', verticalalignment='top',
-                    fontsize=18, family='Input Mono', color=color)
+                    fontsize=14, family='Input Mono', color=color)
+        ax.tick_params(labelsize=8)
 
         if is_abs:
              ax.axvline(x=bg, color=color)
@@ -191,15 +193,13 @@ class ShiftPlotter(Plotter):
         n_subjects = len(self.subjects)
         color = color_for_size(size, style=self.cargs.color)
         cur_subject = self.subjects.index(subject)
-        label = size_to_label(size) if cur_subject == 0 else "_" + subject
+        label = str(size) if cur_subject == 0 else "_" + subject
 
         if n_subjects > 1:
             hsv = rgb_to_hsv(color[:3])
             idx_subject = (cur_subject/n_subjects)
             hsv[1] = (1.0-idx_subject)*0.6+0.2
             color = hsv_to_rgb(hsv)
-
-
 
         style = {'color': color, 'label': label}
         return style
@@ -231,7 +231,6 @@ class CompareShiftPlotter(ShiftPlotter):
 
     def plot_data(self, df, grp, ax, style):
         x = df[np.isfinite(df['shift'])]
-        lbl = style['label']
         style['linewidht'] = 1.5
         color = color_for_size(40)
         plt.errorbar(x['fg'], x['shift'], yerr=x['err'], label='Kellner & Wachtler 2016', color=color)
