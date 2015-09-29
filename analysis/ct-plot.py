@@ -512,6 +512,7 @@ def main():
     parser.add_argument('-U', '--unit', dest='unit', type=str, default='cm')
     parser.add_argument('-P', '--path', dest='path', type=str, default=None)
     parser.add_argument('-F', '--filename', dest='filename', type=str, default=None)
+    parser.add_argument('--scale', default=1, type=float)
     args = parser.parse_args()
 
     df = read_data([args.data])
@@ -552,7 +553,8 @@ def main():
     if args.save:
         for f in fig:
             ggsave(plot=f, filename=args.filename, path=args.path,
-                   width=args.width, height=args.height, units=args.unit)
+                   width=args.width, height=args.height, units=args.unit,
+                   dpi=600, scale=args.scale)
     else:
         plt.show()
 
