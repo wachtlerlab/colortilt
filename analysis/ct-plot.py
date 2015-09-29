@@ -150,6 +150,15 @@ class ShiftPlotter(Plotter):
             if not self.cargs.no_title:
                 plt.suptitle(name)
 
+            if not self.single:
+                fig.text(0.5, 0.01, 'Stimulus hue relative to surround [deg]', ha='center')
+                fig.text(0.01, 0.5, 'Induced hue shift [deg]', va='center', rotation='vertical')
+                fig.subplots_adjust(top=.95)
+                fig.subplots_adjust(bottom=.06)
+                fig.subplots_adjust(left=.05)
+                fig.subplots_adjust(right=.97)
+
+
     def __call__(self):
 
         for data, context in self.gd.data:
