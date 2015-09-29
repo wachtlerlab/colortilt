@@ -464,7 +464,7 @@ def plot_spread_polar(df, args):
         tl, rl = cart2pol(el[:, 0], el[:, 1])
         alpha_deg = alpha_f/np.pi*180.0
         print(u"α: %f = %f°" % (alpha_f, alpha_deg))
-        plt.plot(tl, rl, label=u"fitted ellipse (α: %.1f°)" % alpha_deg, color='#111111')
+        plt.plot(tl, rl, label=u"fitted ellipse", color='#111111')
     except ImportError:
         rl = 0
         print('No ellipse fitting, code missing', file=sys.stderr)
@@ -474,7 +474,7 @@ def plot_spread_polar(df, args):
     ax.set_rmax(args.ylim or np.max([np.max(rl), np.max(rho)])*1.05)
     sstr = make_subject_string(df['subject'].unique())
     setattr(fig, 'name', 'spread_polar_' + sstr)
-    plt.legend(framealpha=0.5, scatterpoints=8)
+    ax.legend(framealpha=0.5, scatterpoints=8, bbox_to_anchor=(1.11, 1.11))
     return plotter.figures
 
 def scatter_spread(df, args):
