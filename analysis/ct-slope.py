@@ -50,8 +50,12 @@ def slope_avg_surrounds(df):
     print('Slope, 40, 10', calc_slope(x40, x10), file=sys.stderr)
     print('Slope, 160, 40', calc_slope(x160, x40), file=sys.stderr)
 
+def get_val(row, key):
+    vals = row[key].values
+    assert(len(vals) == 1)
+    return vals[0]
 
-def slope_avg_sizes(df):
+def slope_avg_sizes(df, args):
     def mean_slope(row):
         x10 = row[row.size == 10]
         x40 = row[row.size == 40]
@@ -59,17 +63,41 @@ def slope_avg_sizes(df):
 
         s1 = calc_slope(x40, x10)
         s2 = calc_slope(x160, x40)
-        s3 = calc_slope(x40, x160)
+        s3 = calc_slope(x10, x160)
         sm = np.mean([s1, s2])
 
         return pd.Series({'slope_10_40': s1,
                           'slope_40_160': s2,
                           'slope_10_160': s3,
-                          'slope_mean': sm,
-                          'slope_mean_abs': np.abs(sm)})
+                          'slope_mean':sm,
+                          'slope_mean_abs': -1*sm})
+
+    def slope_last(row):
+        x40 = row[row.size == 40]
+        x160 = row[row.size == 160]
+
+        s2 = calc_slope(x160, x40)
+
+        return pd.Series({'slope_40_160': s2,
+                          'slope_mean_abs': -1*s2})
+
+    def slope_regress(row):
+        x10 = row[row.size == 10]
+        x40 = row[row.size == 40]
+        x160 = row[row.size == 160]
+
+        x = np.log([get_val(k, 'size') for k in [x160, x40, x10]])
+        y = [get_val(k, 'm_mean') for k in [x160, x40, x10]]
+
+        slope, intercept, r_value, p_value, std_err = stats.linregress(x,y)
+
+        return pd.Series({ 'slope_mean_abs': -1*slope, 'err': std_err, 'p': p_value })
+
 
     dfg = df.groupby(['bg', 'subject'])
-    md = dfg.apply(mean_slope)
+    mm = {'regress': slope_regress, 'last': slope_last, 'mean': mean_slope}
+    method=mm[args.method]
+    md = dfg.apply(method)
     md = md.reset_index()
     md.to_csv(sys.stdout, index=False)
 
@@ -77,6 +105,7 @@ def main():
     parser = argparse.ArgumentParser(description='CT - Analysis')
     parser.add_argument('data', type=str, nargs='?', default='-')
     parser.add_argument('over', choices=['surrounds', 'size'])
+    parser.add_argument('--method', choices=['mean', 'regress', 'last'], default='regress')
 
     args = parser.parse_args()
     df = read_data([args.data])
@@ -84,7 +113,7 @@ def main():
     if args.over == 'surrounds':
         slope_avg_surrounds(df)
     else:
-        slope_avg_sizes(df)
+        slope_avg_sizes(df, args)
 
 
 if __name__ == '__main__':
