@@ -14,11 +14,16 @@ def calc_delta(a):
     x_10 = np.mean(a.loc[a['size'] == 10.0]['shift'].values)
     x_40 = np.mean(a.loc[a['size'] == 40.0]['shift'].values)
     x_160 = np.mean(a.loc[a['size'] == 160.0]['shift'].values)
+    upper = np.max(a['shift'])
+    lower = np.min(a['shift'])
     fg = a['fg'].unique()
     assert(len(fg) == 1)
-    sign = -1 if fg < 0 else 1
+    #sign = -1 if fg < 0 else 1
+    sign = 1
+    #delta = sign * (x_10 - x_160)
+    delta = upper - lower
     return pd.Series({'40': sign * x_40,
-                      'delta': sign * (x_10 - x_160),
+                      'delta': delta,
                       'sign': sign})
 
 

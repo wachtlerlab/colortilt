@@ -364,7 +364,7 @@ def plot_delta_combined(df, cargs):
         plt.scatter(x, y, color=colors[idx], marker='o', label=lbl, s=40)
 
     plt.xlabel(u'2°')
-    plt.ylabel(u'0.5° - 8°')
+    plt.ylabel(u'spread (upper - lower)')
     plt.xlim([np.min(px), np.max(px)])
     #plt.legend(loc=2)
 
