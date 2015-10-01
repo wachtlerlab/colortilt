@@ -455,6 +455,15 @@ def pol2cart(theta, rho):
     y = rho * np.sin(theta)
     return x, y
 
+def mirror_if_neg(tr):
+    theta = tr[0]
+    rho = tr[1]
+    if rho < 0:
+        rho *= -1
+        theta = (theta + np.pi) % np.pi
+
+    return (theta, rho)
+
 
 def plot_spread_polar(df, args):
     key = 'spread' if 'spread' in df.columns else 'slope_mean_abs'
@@ -467,6 +476,7 @@ def plot_spread_polar(df, args):
     colors = angles_to_color(bgs)
     theta = np.array(map(lambda x: x/180.0*np.pi, bgs))
     rho = np.array(df[key])
+    theta, rho = zip(*map(mirror_if_neg, zip(theta, rho)))
     x, y = pol2cart(theta, rho)
     plt.hold(True)
     try:
