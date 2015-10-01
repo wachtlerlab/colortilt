@@ -457,6 +457,8 @@ def pol2cart(theta, rho):
 
 
 def plot_spread_polar(df, args):
+    key = 'spread' if 'spread' in df.columns else 'slope_mean_abs'
+
     plotter = Plotter(args, 1, 1)
     df = df[df.bg != -1] # filter out control
     df.sort(['bg'], inplace=True)
@@ -464,7 +466,7 @@ def plot_spread_polar(df, args):
     bgs = df['bg']
     colors = angles_to_color(bgs)
     theta = np.array(map(lambda x: x/180.0*np.pi, bgs))
-    rho = np.array(df['spread'])
+    rho = np.array(df[key])
     x, y = pol2cart(theta, rho)
     plt.hold(True)
     try:
@@ -560,7 +562,7 @@ def main():
     elif 'spread' in df.columns and (len(df) > 10):
         plotter = ShiftPlotter.make(df, args, column='spread')
         fig = plotter()
-    elif 'spread' in df.columns:
+    elif 'spread' in df.columns or 'slope_mean_abs' in df.columns:
         fig = plot_spread_polar(df, args)
     else:
         raise ValueError('Unknown data set')
