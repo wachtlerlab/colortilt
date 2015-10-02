@@ -50,6 +50,8 @@ def calc_delta_scat(reference):
     def do_calc(a):
         if reference == '40':
             ref = np.mean(a.loc[a['size'] == 40.0]['m_mean'].values)
+        elif reference == 'mean28':
+            ref = np.mean([a.loc[a['size'] == 40.0]['m_mean'].values[0], a.loc[a['size'] == 160.0]['m_mean'].values])
         else:
             ref = np.max(a['m_mean'])
         return pd.Series({'ref': ref})
@@ -76,7 +78,7 @@ def main():
     parser.add_argument('data', type=str, nargs='?', default='-')
     parser.add_argument('--sizerel', default=False, action='store_true')
     parser.add_argument('--max-spread', dest='maxspread', default=False, action='store_true')
-    parser.add_argument('--sl-rel', dest='slrel', choices={'40', 'upper'}, default=None)
+    parser.add_argument('--sl-rel', dest='slrel', choices={'40', 'upper', 'mean28'}, default=None)
 
     args = parser.parse_args()
     df = read_data([args.data])
