@@ -497,7 +497,8 @@ def plot_spread_polar(df, args):
     ax.set_rmax(args.ylim or np.max([np.max(rl), np.max(rho)])*1.05)
     sstr = make_subject_string(df['subject'].unique())
     setattr(fig, 'name', 'spread_polar_' + sstr)
-    ax.legend(framealpha=0.5, scatterpoints=8, bbox_to_anchor=(1.11, 1.11))
+    if args.legend:
+        ax.legend(framealpha=0.5, scatterpoints=8, bbox_to_anchor=(1.11, 1.11))
     return plotter.figures
 
 def scatter_spread(df, args):
