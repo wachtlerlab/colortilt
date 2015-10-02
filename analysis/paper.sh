@@ -18,8 +18,8 @@ echo "[p] Figure 4"
 ./ct-load.py "$EXPFILE" | ./ct-filter.py --no-control | ./ct-ana.py -C | ./ct-conv.py abs-shift | ./ct-spread.py --sizerel | ./ct-plot.py -S -F sizerel.pdf -P "$DIR" -U in -W 5.75 -H 7 2>> log.tmp
 
 echo "[p] Figure 5"
-./ct-load.py "$EXPFILE" | ./ct-filter.py --no-control | ./ct-ana.py -C | ./ct-conv.py abs-shift | ./ct-spread.py --sizerel | ./ct-slope.py --method mean size | ./ct-plot.py -S -F "slope28.pdf" -P "$DIR" -U in -W 5.75 -H 5.75 2>> log.tmp
-./ct-load.py "$EXPFILE" | ./ct-filter.py --no-control | ./ct-ana.py -C | ./ct-conv.py abs-shift | ./ct-spread.py --sl-rel 40 | ./ct-slope.py --method mean size | ./ct-plot.py -S -F "slope28rel.pdf" -P "$DIR" -U in -W 5.75 -H 5.75 2>> log.tmp
+./ct-load.py "$EXPFILE" | ./ct-filter.py --no-control | ./ct-ana.py -C | ./ct-conv.py abs-shift | ./ct-spread.py --sizerel | ./ct-slope.py --method mean size | ./ct-plot.py --no-legend -S -F "slope28.pdf" -P "$DIR" -U in -W 5.75 -H 5.75 2>> log.tmp
+./ct-load.py "$EXPFILE" | ./ct-filter.py --no-control | ./ct-ana.py -C | ./ct-conv.py abs-shift | ./ct-spread.py --sl-rel 40 | ./ct-slope.py --method mean size | ./ct-plot.py --no-legend -S -F "slope28rel.pdf" -P "$DIR" -U in -W 5.75 -H 5.75 2>> log.tmp
 
 
 echo "[p] Figure 6"
