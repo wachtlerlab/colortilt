@@ -70,7 +70,7 @@ def slope_avg_sizes(df, args):
                           'slope_40_160': s2,
                           'slope_10_160': s3,
                           'slope_mean':sm,
-                          'slope_mean_abs': -1*sm})
+                          'slope_mean_abs': -1*s2})
 
     def slope_last(row):
         x40 = row[row.size == 40]
@@ -86,8 +86,8 @@ def slope_avg_sizes(df, args):
         x40 = row[row.size == 40]
         x160 = row[row.size == 160]
 
-        x = np.log([get_val(k, 'size') for k in [x160, x40, x10]])
-        y = [get_val(k, 'm_mean') for k in [x160, x40, x10]]
+        x = np.log([get_val(k, 'size') for k in [x160, x40]])
+        y = [get_val(k, 'm_mean') for k in [x160, x40]]
 
         slope, intercept, r_value, p_value, std_err = stats.linregress(x,y)
 
