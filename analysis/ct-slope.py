@@ -33,10 +33,11 @@ def calc_slope(a, b):
     return slope
 
 
-def slope_avg_surrounds(df):
+def slope_avg_surrounds(df, args):
 
-    #df = df[df.bg != 270]
-    #df = df[df.bg != 90]
+    if args.nos:
+        df = df[df.bg != 270]
+        df = df[df.bg != 90]
 
     dfg = df.groupby(['size', 'subject'])
     md = dfg.apply(calc_mean_over_surrounds)
@@ -106,12 +107,13 @@ def main():
     parser.add_argument('data', type=str, nargs='?', default='-')
     parser.add_argument('over', choices=['surrounds', 'size'])
     parser.add_argument('--method', choices=['mean', 'regress', 'last'], default='regress')
+    parser.add_argument('--no-s', dest='nos', action='store_true', default=False)
 
     args = parser.parse_args()
     df = read_data([args.data])
 
     if args.over == 'surrounds':
-        slope_avg_surrounds(df)
+        slope_avg_surrounds(df, args)
     else:
         slope_avg_sizes(df, args)
 
