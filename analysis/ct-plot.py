@@ -475,6 +475,10 @@ def get_eccentricity(radii):
     e = np.sqrt(1 - (b**2)/(a**2))
     return e
 
+def get_ellipse_ratio(radii):
+    b, a = sorted(radii)
+    return a/b
+
 def plot_spread_polar(df, args):
     key = 'spread' if 'spread' in df.columns else 'slope_mean_abs'
 
@@ -496,7 +500,7 @@ def plot_spread_polar(df, args):
         el = create_ellipse(rf,xcf,alpha_f)
         tl, rl = cart2pol(el[:, 0], el[:, 1])
         alpha_deg = alpha_f/np.pi*180.0
-        print(u"α: %f = %f°, eccentricity: %f" % (alpha_f, alpha_deg, get_eccentricity(rf)))
+        print(u"α: %f = %f°, eccentricity: %f, ratio: %f" % (alpha_f, alpha_deg, get_eccentricity(rf), get_ellipse_ratio(rf)))
 
         plt.plot(tl, rl, label=u"fitted ellipse", color='#111111')
     except ImportError:
