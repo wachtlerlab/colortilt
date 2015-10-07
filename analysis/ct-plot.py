@@ -173,7 +173,11 @@ class ShiftPlotter(Plotter):
 
             if self.legend and bg == 0:
                 location = 1 if self.is_vertical else 4
-                plt.legend(loc=location, fontsize=10, fancybox=True, framealpha=0.5)
+                handles, labels = ax.get_legend_handles_labels()
+                if len(handles) > 0:
+                    # sort both labels and handles by labels
+                    labels, handles = zip(*sorted(zip(labels, handles), key=lambda t: t[0]))
+                    ax.legend(handles, labels, loc=location, fontsize=10, fancybox=True, framealpha=0.5)
 
         return self.figures
 
@@ -193,7 +197,7 @@ class ShiftPlotter(Plotter):
         n_subjects = len(self.subjects)
         color = color_for_size(size, style=self.cargs.color)
         cur_subject = self.subjects.index(subject)
-        label = str(size) if cur_subject == 0 else "_" + subject
+        label = size_to_label(size) if cur_subject == 0 else "_" + subject
 
         if n_subjects > 1:
             hsv = rgb_to_hsv(color[:3])
@@ -465,6 +469,12 @@ def mirror_if_neg(tr):
     return (theta, rho)
 
 
+def get_eccentricity(radii):
+    b, a = sorted(radii)
+    print('a: %f, b: %f' % (a, b))
+    e = np.sqrt(1 - (b**2)/(a**2))
+    return e
+
 def plot_spread_polar(df, args):
     key = 'spread' if 'spread' in df.columns else 'slope_mean_abs'
 
@@ -486,7 +496,8 @@ def plot_spread_polar(df, args):
         el = create_ellipse(rf,xcf,alpha_f)
         tl, rl = cart2pol(el[:, 0], el[:, 1])
         alpha_deg = alpha_f/np.pi*180.0
-        print(u"α: %f = %f°" % (alpha_f, alpha_deg))
+        print(u"α: %f = %f°, eccentricity: %f" % (alpha_f, alpha_deg, get_eccentricity(rf)))
+
         plt.plot(tl, rl, label=u"fitted ellipse", color='#111111')
     except ImportError:
         rl = 0
@@ -495,6 +506,9 @@ def plot_spread_polar(df, args):
     plt.scatter(theta, rho, c=colors, s=50, marker='o', label='surround hue')
 
     ax.set_rmax(args.ylim or np.max([np.max(rl), np.max(rho)])*1.05)
+    if np.max(rho) < 1:
+        print('XXX')
+        ax.set_yticks([0.1, 0.2, 0.3, 0.4])
     sstr = make_subject_string(df['subject'].unique())
     setattr(fig, 'name', 'spread_polar_' + sstr)
     if args.legend:
@@ -571,8 +585,10 @@ def main():
         plotter = ShiftPlotter.make(df, args, column='szdiff')
         fig = plotter()
     elif 'spread' in df.columns and (len(df) > 10):
-        plotter = ShiftPlotter.make(df, args, column='spread')
-        fig = plotter()
+        #plotter = ShiftPlotter.make(df, args, column='spread')
+        #fig = plotter()
+        #fig = plot_spread_polar(df, args)
+        fig = scatter_spread(df, args)
     elif 'spread' in df.columns or 'slope_mean_abs' in df.columns:
         fig = plot_spread_polar(df, args)
     else:
