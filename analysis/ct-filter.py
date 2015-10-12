@@ -39,6 +39,7 @@ def main():
     parser.add_argument('--fg', dest='fg', type=float, default=None)
     parser.add_argument('-B', '--bg', dest='bg', type=float, default=None)
     parser.add_argument('--fg-sign', dest='fg_sign', default=None)
+    parser.add_argument('--subject', dest='subject', default=None)
     args = parser.parse_args()
 
     df = read_data([args.data])
@@ -58,6 +59,8 @@ def main():
     if args.bg is not None:
         df = filter_bg(df, args.bg)
 
+    if args.subject is not None:
+        df = df[df.subject == args.subject]
 
     df.to_csv(sys.stdout, index=False)
 
