@@ -237,7 +237,7 @@ class CompareShiftPlotter(ShiftPlotter):
         x = df[np.isfinite(df['shift'])]
         style['linewidht'] = 1.5
         color = color_for_size(40)
-        plt.errorbar(x['fg'], x['shift'], yerr=x['err'], label='Kellner & Wachtler 2016', color=color)
+        plt.errorbar(x['fg'], x['shift'], yerr=x['err'], label='current study', color=color)
         plt.errorbar(df['fg'], df['oshift'], yerr=df['oerr'], label='Klauke & Wachtler 2015', color='k')
 
 
