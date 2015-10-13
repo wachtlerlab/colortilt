@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# coding=utf-8
 from __future__ import print_function
 from __future__ import division
 
@@ -9,6 +10,26 @@ import fnmatch
 import time
 import argparse
 
+
+def rotate(data, fg, angle):
+    delta = np.diff(fg)
+    assert(all(map(lambda x: x == delta[0], delta)))
+    delta = delta[0]
+    print(u"Δ ° = %f" % delta, file=sys.stderr)
+    N, r = divmod(angle, delta)
+    assert(r == 0.0)
+    print(u"q, r = %f + %f" % (N, r), file=sys.stderr)
+    return np.roll(data, int(N))
+
+
+def gen_for_bg(shift, mod, bg):
+    res = shift.copy()
+    mshift = np.abs(mod['shift'])
+    mshift = mshift / np.mean(mshift)
+    mfg = np.array(mod['fg'])
+    res['shift'] *= rotate(mshift, mfg, bg)
+    res['bg'] = bg
+    return res
 
 def main():
     parser = argparse.ArgumentParser(description='CT - Analysis - import data')
@@ -22,8 +43,10 @@ def main():
     print(shift, len(shift), file=sys.stderr)
     print(mod, len(mod), file=sys.stderr)
 
-    shift['shift'] *= np.abs(mod['shift'])
-    shift.to_csv(sys.stdout)
+    surrounds = np.arange(0, 360, 45)
+    frames = [gen_for_bg(shift, mod, bg) for bg in surrounds]
+    data = pd.concat(frames, ignore_index=True)
+    data.to_csv(sys.stdout, index=False)
 
 if __name__ == "__main__":
     main()
