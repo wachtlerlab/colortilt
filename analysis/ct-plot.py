@@ -509,14 +509,20 @@ def plot_spread_polar(df, args):
 
     plt.scatter(theta, rho, c=colors, s=50, marker='o', label='surround hue')
 
-    ax.set_rmax(args.ylim or np.max([np.max(rl), np.max(rho)])*1.05)
+    rmax = args.ylim or np.max([np.max(rl), np.max(rho)])*1.05
+
+    if args.daylight:
+        daylight = 112 / 180 * np.pi
+        ax.plot([daylight]*2 + [daylight+np.pi]*2, [0, rmax]*2, color='dodgerblue')
+
+    ax.set_rmax(rmax)
     if np.max(rho) < 1:
-        print('XXX')
         ax.set_yticks([0.1, 0.2, 0.3, 0.4])
     sstr = make_subject_string(df['subject'].unique())
     setattr(fig, 'name', 'spread_polar_' + sstr)
     if args.legend:
         ax.legend(framealpha=0.5, scatterpoints=8, bbox_to_anchor=(1.11, 1.11))
+
     return plotter.figures
 
 def scatter_spread(df, args):
@@ -559,6 +565,7 @@ def main():
     parser.add_argument('-P', '--path', dest='path', type=str, default=None)
     parser.add_argument('-F', '--filename', dest='filename', type=str, default=None)
     parser.add_argument('--scale', default=1, type=float)
+    parser.add_argument('--daylight', default=False, action='store_true')
     args = parser.parse_args()
 
     df = read_data([args.data])
