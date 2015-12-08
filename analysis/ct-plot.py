@@ -431,7 +431,7 @@ def plot_sizerel_combined(df, cargs):
         arr = dfc_group.get_group(bg)
         x = 2*np.arctan2(arr['size'], 2.0*1145.0)/np.pi*180.0
         x = np.log2(x)
-        if 'm_err' in arr.columns:
+        if 'm_merr' in arr.columns:
             plt.errorbar(x, arr['m_mean'], yerr=arr['m_merr'], color=colors[idx])
         else:
             plt.plot(x, arr['m_mean'], color=colors[idx])
