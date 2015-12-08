@@ -12,7 +12,8 @@ echo "[p] Figure 2"
 ./ct-load.py "$EXPFILE" | ./ct-ana.py | ./ct-filter.py -B 0.0 | ./ct-plot.py --ylim 35 --single --no-title -S -W 16 -H 12 -P "$DIR" -F shift_all_single_0.pdf 2>> log.tmp
 
 echo "[p] Figure 3"
-./ct-load.py $EXPFILE | ./ct-ana.py -C | ./ct-plot.py --scale 2 -W 5.75 -H 4 -S -U in --ylim 30 --no-title -P "$DIR"  -F shift_all.pdf  2>> log.tmp
+./ct-load.py "$EXPFILE" | ./ct-filter.py --no-control | ./ct-ana.py -C | ./ct-conv.py abs-shift | ./ct-spread.py --max-spread  > "$DIR/maxspread.csv"
+./ct-load.py $EXPFILE | ./ct-ana.py -C | ./ct-plot.py --scale 2 -W 5.75 -H 4 -S -U in --ylim 30 --no-title -P "$DIR"  -F shift_all.pdf --annotate "$DIR/maxspread.csv" 2>> log.tmp
 
 echo "[p] Figure 4"
 ./ct-load.py "$EXPFILE" | ./ct-filter.py --no-control | ./ct-ana.py -C | ./ct-conv.py abs-shift | ./ct-spread.py --sizerel | ./ct-plot.py -S -F sizerel.pdf -P "$DIR" -U in -W 5.75 -H 7 2>> log.tmp
