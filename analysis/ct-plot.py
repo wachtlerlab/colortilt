@@ -217,6 +217,15 @@ class ShiftPlotter(Plotter):
             plt.xlabel("Stimulus hue relative to surround [deg]", fontsize=10)
             plt.ylabel("Induced hue changes [deg]", fontsize=10)
 
+    def annotate_fgs(self, data):
+        #print(data)
+        bgs = data['bg'].unique()
+        for bg in bgs:
+            ax, fig = self.subplot(bg)
+            row = data.loc[data.bg == bg]
+            fg = np.array(row.fg)
+            ax.scatter(fg, [0], marker="*", color='black', s=30)
+
 class CompareShiftPlotter(ShiftPlotter):
     def __init__(self, df, cargs):
         super(CompareShiftPlotter, self).__init__(df, 'shift', cargs)
@@ -566,6 +575,7 @@ def main():
     parser.add_argument('-F', '--filename', dest='filename', type=str, default=None)
     parser.add_argument('--scale', default=1, type=float)
     parser.add_argument('--daylight', default=False, action='store_true')
+    parser.add_argument('--annotate', default=None)
     args = parser.parse_args()
 
     df = read_data([args.data])
@@ -582,6 +592,9 @@ def main():
         fig = plotter()
     elif 'shift' in df.columns:
         plotter = ShiftPlotter.make(df, args)
+        if args.annotate:
+            data = read_data([args.annotate])
+            plotter.annotate_fgs(data)
         fig = plotter()
     elif 'delta' in df.columns:
         fig = plot_delta_combined(df, args)
