@@ -504,10 +504,9 @@ def plot_spread_polar(df, args):
     plt.hold(True)
     try:
         from colortilt.ellipse import fit_ellipse, get_parameters, create_ellipse
-        a = fit_ellipse(x, y)
+        a = fit_ellipse(theta, rho)
         rf, xcf, alpha_f = get_parameters(a)
-        el = create_ellipse(rf,xcf,alpha_f)
-        tl, rl = cart2pol(el[:, 0], el[:, 1])
+        tl, rl = create_ellipse(a, 360)
         alpha_deg = alpha_f/np.pi*180.0
         print(u"α: %f = %f°, eccentricity: %f, ratio: %f" % (alpha_f, alpha_deg, get_eccentricity(rf), get_ellipse_ratio(rf)))
 
