@@ -50,14 +50,14 @@ experiment experiment::from_yaml(const fs::file &path) {
 }
 
 
-fs::file experiment::find_file(const std::string &additional_path) {
+fs::file experiment::find_file(const std::string &name, const std::string &additional_path) {
 
     std::vector<fs::file> known_files = {
-            fs::file(additional_path),
-            fs::file("colortilt.experiment"),
-            fs::file("~/colortilt.experiment"),
-            fs::file("~/experiments/colortilt.experiment"),
-            fs::file("~/experiments/colortilt/experiment")
+            fs::file(name + additional_path),
+            fs::file(name + ".experiment"),
+            fs::file("~/" + name + ".experiment"),
+            fs::file("~/experiments/" + name + ".experiment"),
+            fs::file("~/experiments/" + name + "/experiment")
     };
 
     std::cerr << "[D] Looking for exp file in: " << std::endl;

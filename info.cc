@@ -60,13 +60,19 @@ int main(int argc, char **argv) {
     try {
         iris::data::store store = iris::data::store::default_store();
 
-        std::string baseloc = "";
+        std::string name = "";
         if (argc > 1) {
-            baseloc = argv[1];
+            name = argv[1];
         }
 
+        std::string baseloc = "";
+        if (argc > 2) {
+            baseloc = argv[2];
+        }
+
+
         // load the experiment data
-        fs::file exp_file = colortilt::experiment::find_file(baseloc);
+        fs::file exp_file = colortilt::experiment::find_file(name, baseloc);
         if (exp_file.path().empty()) {
             std::cerr << "Could not find experiment file!" << std::endl;
             return -1;

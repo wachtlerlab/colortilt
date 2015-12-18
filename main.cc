@@ -323,38 +323,20 @@ void ct_wnd::render_stimulus() {
     progress.draw(px2gl);
 }
 
-static fs::file find_experiment_file() {
-
-    static std::vector<fs::file> known_files = {
-            fs::file("colortilt.experiment"),
-            fs::file("~/colortilt.experiment"),
-            fs::file("~/experiments/colortilt.experiment"),
-            fs::file("~/experiments/colortilt/experiment")
-    };
-
-    std::cerr << "[D] Looking for exp file in: " << std::endl;
-    for (fs::file &f : known_files) {
-        std::cerr << f.path() << std::endl;
-        if (f.exists()) {
-            return f;
-        }
-    }
-
-    return fs::file();
-}
-
 
 int main(int argc, char **argv) {
     namespace po = boost::program_options;
 
     float gray_level = -1;
     std::string sid = "";
+    std::string experiment = "colortilt";
 
     po::options_description opts("colortilt experiment");
     opts.add_options()
             ("help", "produce help message")
             ("gray", po::value<float>(&gray_level), "reference gray [default=read from rgb2lms]")
-            ("subject,S", po::value<std::string>(&sid)->required());
+            ("subject,S", po::value<std::string>(&sid)->required())
+            ("experiment,E", po::value<std::string>(&experiment)->required());
 
     po::positional_options_description pos;
     pos.add("subject", 1);
@@ -378,7 +360,7 @@ int main(int argc, char **argv) {
     std::string exp_start = iris::make_timestamp();
 
     // load the experiment data
-    fs::file exp_file = find_experiment_file();
+    fs::file exp_file = ct::experiment::find_file(experiment, "");
     if (exp_file.path().empty()) {
         std::cerr << "Could not find experiment file!" << std::endl;
         return -1;
