@@ -1,7 +1,5 @@
 #!/bin/bash
 
-EXPFILE=../../colortilt-data/experiment
-
 tstamp=$(date +%Y%m%dT%H%M)
 echo "Time: $tstamp"
 DIR="$tstamp"
